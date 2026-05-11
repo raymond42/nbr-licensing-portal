@@ -1,0 +1,27 @@
+name: Deploy
+
+# Placeholder workflow. Each app deploys via its own job so they can target
+# different environments (e.g. API to a container host, Web to a managed
+# platform) without coupling release cadence.
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'Which app to deploy'
+        required: true
+        type: choice
+        options: [api, web]
+
+jobs:
+  deploy-api:
+    if: ${{ inputs.app == 'api' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "TODO: build & push API image, run migrations, deploy."
+
+  deploy-web:
+    if: ${{ inputs.app == 'web' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "TODO: deploy web app to chosen hosting target."
