@@ -15,6 +15,34 @@ enum Role {
   ADMIN
 }
 
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  INFO_REQUESTED
+  RESUBMITTED
+  REVIEW_COMPLETED
+  APPROVED
+  REJECTED
+}
+
+enum DocumentType {
+  CERTIFICATE_OF_INCORPORATION
+  ARTICLES_OF_ASSOCIATION
+  AUDITED_FINANCIAL_STATEMENTS
+  BUSINESS_PLAN
+  TAX_CLEARANCE
+  DIRECTOR_IDENTIFICATION
+  OTHER
+}
+
+enum AuditAction {
+  APPLICATION_CREATED
+  APPLICATION_UPDATED
+  STATUS_CHANGED
+  DOCUMENT_UPLOADED
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -25,5 +53,70 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  applications                  Application[]          @relation("ApplicantApplications")
+  applicationsReviewCompleted   Application[]          @relation("ReviewCompletedBy")
+  uploadedDocuments             ApplicationDocument[]
+  auditLogs                     AuditLog[]
+
   @@map("users")
+}
+
+model Application {
+  id                       String            @id @default(uuid())
+  applicantId              String
+  applicant                User              @relation("ApplicantApplications", fields: [applicantId], references: [id])
+  institutionName          String
+  licenseCategory          String
+  status                   ApplicationStatus @default(DRAFT)
+  version                  Int               @default(0)
+  reviewCompletedByUserId  String?
+  reviewCompletedBy        User?             @relation("ReviewCompletedBy", fields: [reviewCompletedByUserId], references: [id])
+  submittedAt              DateTime?
+  decidedAt                DateTime?
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+
+  documents ApplicationDocument[]
+  auditLogs AuditLog[]
+
+  @@index([applicantId])
+  @@index([status])
+  @@map("applications")
+}
+
+model ApplicationDocument {
+  id               String       @id @default(uuid())
+  applicationId    String
+  application      Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  type             DocumentType
+  logicalKey       String
+  version          Int
+  storagePath      String
+  originalFileName String
+  mimeType         String
+  sizeBytes        Int
+  checksum         String?
+  uploadedByUserId String
+  uploadedBy       User         @relation(fields: [uploadedByUserId], references: [id])
+  createdAt        DateTime     @default(now())
+
+  @@unique([applicationId, logicalKey, version])
+  @@index([applicationId])
+  @@map("application_documents")
+}
+
+model AuditLog {
+  id              String             @id @default(uuid())
+  applicationId   String
+  application     Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  actorUserId     String
+  actor           User               @relation(fields: [actorUserId], references: [id])
+  action          AuditAction
+  previousStatus  ApplicationStatus?
+  nextStatus      ApplicationStatus?
+  metadata        Json?
+  createdAt       DateTime           @default(now())
+
+  @@index([applicationId, createdAt])
+  @@map("audit_logs")
 }

@@ -1,28 +1,97 @@
-import { PrismaClient, Role } from '@prisma/client';
+import {
+  ApplicationStatus,
+  PrismaClient,
+  Role,
+} from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const BCRYPT_COST = 12;
 
+const DEFAULT_PASSWORD = 'NbrDemo_Local_Only!';
+
 async function main() {
-  const email = process.env.SEED_ADMIN_EMAIL?.trim();
-  const password = process.env.SEED_ADMIN_PASSWORD;
-
-  if (!email || !password) {
-    throw new Error('SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD are required.');
-  }
-  if (password.length < 12) {
-    throw new Error('SEED_ADMIN_PASSWORD must be at least 12 characters.');
-  }
-
   const prisma = new PrismaClient();
+  const passwordPlain =
+    process.env.SEED_DEFAULT_PASSWORD?.trim() || DEFAULT_PASSWORD;
+  if (passwordPlain.length < 12) {
+    throw new Error('SEED_DEFAULT_PASSWORD must be at least 12 characters when set.');
+  }
+  const passwordHash = await bcrypt.hash(passwordPlain, BCRYPT_COST);
+
   try {
-    const passwordHash = await bcrypt.hash(password, BCRYPT_COST);
-    const user = await prisma.user.upsert({
-      where: { email },
-      update: {},
-      create: { email, fullName: 'Platform Administrator', role: Role.ADMIN, passwordHash },
+    const applicant = await prisma.user.upsert({
+      where: { email: 'applicant@nbr.local' },
+      update: { passwordHash, fullName: 'Demo Applicant', role: Role.APPLICANT, isActive: true },
+      create: {
+        email: 'applicant@nbr.local',
+        fullName: 'Demo Applicant',
+        role: Role.APPLICANT,
+        passwordHash,
+      },
     });
-    console.log(`[seed] admin ready: ${user.email}`);
+
+    await prisma.user.upsert({
+      where: { email: 'reviewer@nbr.local' },
+      update: { passwordHash, fullName: 'Demo Reviewer', role: Role.REVIEWER, isActive: true },
+      create: {
+        email: 'reviewer@nbr.local',
+        fullName: 'Demo Reviewer',
+        role: Role.REVIEWER,
+        passwordHash,
+      },
+    });
+
+    await prisma.user.upsert({
+      where: { email: 'approver@nbr.local' },
+      update: { passwordHash, fullName: 'Demo Approver', role: Role.APPROVER, isActive: true },
+      create: {
+        email: 'approver@nbr.local',
+        fullName: 'Demo Approver',
+        role: Role.APPROVER,
+        passwordHash,
+      },
+    });
+
+    await prisma.user.upsert({
+      where: { email: 'admin@nbr.local' },
+      update: { passwordHash, fullName: 'Demo Admin', role: Role.ADMIN, isActive: true },
+      create: {
+        email: 'admin@nbr.local',
+        fullName: 'Demo Admin',
+        role: Role.ADMIN,
+        passwordHash,
+      },
+    });
+
+    const existingApps = await prisma.application.count({
+      where: { applicantId: applicant.id },
+    });
+    if (existingApps === 0) {
+      await prisma.application.create({
+        data: {
+          applicantId: applicant.id,
+          institutionName: 'Kigali Community Microfinance',
+          licenseCategory: 'Microfinance',
+          status: ApplicationStatus.UNDER_REVIEW,
+          version: 2,
+          submittedAt: new Date(),
+        },
+      });
+      await prisma.application.create({
+        data: {
+          applicantId: applicant.id,
+          institutionName: 'Northern Province Credit Union',
+          licenseCategory: 'Credit Union',
+          status: ApplicationStatus.INFO_REQUESTED,
+          version: 4,
+          submittedAt: new Date(),
+        },
+      });
+    }
+
+    console.log('[seed] users: applicant@nbr.local, reviewer@nbr.local, approver@nbr.local, admin@nbr.local');
+    console.log(`[seed] password (default): ${DEFAULT_PASSWORD} — override with SEED_DEFAULT_PASSWORD`);
+    console.log('[seed] applications: seeded when none existed for demo applicant');
   } finally {
     await prisma.$disconnect();
   }

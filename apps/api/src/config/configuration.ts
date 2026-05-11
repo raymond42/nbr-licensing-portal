@@ -18,6 +18,6 @@ export default (): AppConfiguration => ({
   },
   uploads: {
     dir: process.env.UPLOAD_DIR ?? './uploads',
-    maxBytes: parseInt(process.env.MAX_UPLOAD_SIZE_BYTES ?? '10485760', 10),
+    maxBytes: parseInt(process.env.MAX_UPLOAD_SIZE_BYTES ?? String(5 * 1024 * 1024), 10),
   },
 });
