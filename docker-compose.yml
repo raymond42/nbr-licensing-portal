@@ -33,6 +33,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-nbr}:${POSTGRES_PASSWORD:-nbr}@postgres:5432/${POSTGRES_DB:-nbr_licensing}?schema=public
       JWT_SECRET: ${JWT_SECRET:-nbr-licence-12345}
       JWT_EXPIRES_IN: 3600s
+      MAX_UPLOAD_SIZE_BYTES: 5242880
       UPLOAD_DIR: /workspace/apps/api/uploads
     ports:
       - '3001:3001'

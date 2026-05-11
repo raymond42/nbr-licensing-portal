@@ -34,8 +34,11 @@ COPY --from=build /workspace/apps/api/node_modules /workspace/apps/api/node_modu
 COPY --from=build /workspace/apps/api/dist /workspace/apps/api/dist
 COPY --from=build /workspace/apps/api/package.json /workspace/apps/api/package.json
 COPY --from=build /workspace/apps/api/prisma /workspace/apps/api/prisma
+COPY --from=build /workspace/apps/api/docker-entrypoint.sh /workspace/apps/api/docker-entrypoint.sh
 COPY --from=build /workspace/packages/shared/package.json /workspace/packages/shared/package.json
 COPY --from=build /workspace/packages/shared/dist /workspace/packages/shared/dist
 
+RUN chmod +x /workspace/apps/api/docker-entrypoint.sh
+
 EXPOSE 3001
-CMD ["node", "dist/main.js"]
+ENTRYPOINT ["/workspace/apps/api/docker-entrypoint.sh"]

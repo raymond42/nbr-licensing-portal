@@ -8,10 +8,20 @@ target topology; concrete provider choices are environment decisions.
 - Build artifact: container image from `apps/api/Dockerfile`.
 - Required env: `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`,
   `CORS_ORIGIN`, `PORT`, `UPLOAD_DIR`, `MAX_UPLOAD_SIZE_BYTES`.
-- Run database migrations on each release:
-  `pnpm --filter @nbr/api prisma migrate deploy`.
-- Persistent storage: mount a volume for `UPLOAD_DIR` (or swap to S3-style
-  object storage in `documents` once implemented).
+- **Container startup**: [`apps/api/docker-entrypoint.sh`](../apps/api/docker-entrypoint.sh)
+  runs **`npx prisma migrate deploy`** before **`node dist/main.js`**, so the
+  shipped image applies pending migrations on boot. Still verify migrations in
+  CI/CD (logs, smoke tests) before promoting a release.
+- **Uploads**: Default maximum request body size for documents is **5MB**
+  (`MAX_UPLOAD_SIZE_BYTES=5242880`). Mount a **persistent volume** on
+  `UPLOAD_DIR` in production (Compose already mounts `./apps/api/uploads` for
+  local full-stack runs). Swap to object storage later if policy requires it.
+- **Seed (optional)**: For non-production or dedicated bootstrap environments,
+  you can run `pnpm --filter @nbr/api exec prisma db seed` with
+  `SEED_DEFAULT_PASSWORD` set (minimum **12** characters when provided). The
+  script is idempotent for demo users and only creates sample applications when
+  none exist for the demo applicant. **Do not** rely on default passwords in
+  production; use strong, environment-specific secrets.
 
 ## Web (`apps/web`)
 

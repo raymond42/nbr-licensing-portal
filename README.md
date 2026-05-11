@@ -14,7 +14,7 @@ nbr-licensing-portal/
 │   └── web/        # Next.js (App Router) frontend
 ├── packages/
 │   └── shared/     # Type-only contracts (enums, DTOs, roles, workflow)
-├── docs/           # Architecture & deployment notes
+├── docs/           # Architecture, deployment, API reference
 └── .github/        # CI/CD workflows
 ```
 
@@ -53,13 +53,22 @@ pnpm --filter @nbr/shared build
 # 5. Generate the Prisma client
 pnpm --filter @nbr/api exec prisma generate
 
-# 6. Run both apps in watch mode
+# 6. Apply database migrations (required so the schema matches the code)
+pnpm --filter @nbr/api exec prisma migrate deploy
+
+# 7. (Optional) Seed demo users and sample applications
+pnpm seed
+
+# 8. Run both apps in watch mode
 pnpm dev
 ```
 
+For first-time local development you can use `pnpm --filter @nbr/api exec prisma migrate dev` instead of `migrate deploy` if you prefer Prisma’s interactive migration workflow.
+
 The web app will be available at <http://localhost:3000>; the API at
-<http://localhost:3001/api> with Swagger docs at
-<http://localhost:3001/docs>.
+<http://localhost:3001/api> with Swagger UI at
+<http://localhost:3001/api/docs> (OpenAPI JSON at `/api/docs-json`; `/docs` and `/docs-json` redirect here with 301). After seeding, use the demo accounts in
+[`docs/api-reference.md`](docs/api-reference.md) to call `POST /api/auth/login`.
 
 ## Scripts
 
@@ -72,7 +81,7 @@ Run from the repository root:
 | `pnpm lint`     | Lint every workspace package.                        |
 | `pnpm test`     | Run tests for every workspace package.               |
 | `pnpm typecheck`| Strict type-check across the monorepo.               |
-| `pnpm seed`     | Run the API seed script (placeholder).               |
+| `pnpm seed`     | Run the API Prisma seed via `pnpm --filter @nbr/api run seed` (demo users: `applicant@nbr.local`, `reviewer@nbr.local`, `approver@nbr.local`, `admin@nbr.local`; optional `SEED_DEFAULT_PASSWORD` in `apps/api/.env`; idempotent sample applications). |
 | `pnpm format`   | Format the repository with Prettier.                 |
 
 Per-app commands use pnpm filters, e.g.
@@ -112,9 +121,11 @@ See [`docs/deployment.md`](docs/deployment.md) for full guidance.
 ## Documentation
 
 - [`docs/architecture.md`](docs/architecture.md) — system design, module map,
-  shared-package usage rules.
+  shared-package usage rules, workflow and audit integrity.
 - [`docs/deployment.md`](docs/deployment.md) — per-app deployment topology
   and independence checklist.
+- [`docs/api-reference.md`](docs/api-reference.md) — REST endpoints, roles,
+  workflow states (complement to Swagger at `/api/docs`).
 
 ## License
 

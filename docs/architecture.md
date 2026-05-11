@@ -58,15 +58,51 @@ flowchart LR
 
 ## Module map (API)
 
-| Module         | Responsibility                                        |
-| -------------- | ----------------------------------------------------- |
-| `auth`         | Authentication, JWT issuance, strategy registration.  |
-| `users`        | User management and role assignment.                  |
-| `applications` | Licensing application CRUD and lookups.               |
-| `workflow`     | Authoritative state machine for application lifecycle.|
-| `audit`        | Append-only audit trail for regulatory traceability.  |
-| `documents`    | Document upload, storage, retrieval.                  |
-| `common`       | Cross-cutting helpers (filters, interceptors, DTOs).  |
+| Module           | Responsibility |
+| ---------------- | -------------- |
+| `auth`           | JWT issuance, login, Passport JWT strategy registration. |
+| `users`          | Authenticated profile (`/users/me`) and helpers used by JWT validation (not a full admin user-management console). |
+| `applications`   | **Workflow orchestration**: action-oriented REST routes, Prisma transactions, optimistic locking on `Application.version`, audit writes; **not** a generic CRUD status bypass. |
+| `workflow`       | **Pure domain rules** only: allowed transitions and role eligibility from [`WORKFLOW_TRANSITIONS`](../packages/shared/src/workflow/workflow-state.const.ts). No HTTP controller. |
+| `audit`          | Append-only audit log writes (inside transactions) and read API; DB triggers block `UPDATE`/`DELETE` on `audit_logs`. |
+| `documents`      | Local file persistence and versioned metadata; uploads are exposed as **nested** routes under `applications` (no standalone documents controller). |
+| `common`         | Cross-cutting pieces: global exception filter, JWT/roles guards, decorators (`@Roles`, `@CurrentUser`). |
+
+## Regulatory and data integrity
+
+- **Workflow**: The only valid status changes are those listed in
+  [`WORKFLOW_TRANSITIONS`](../packages/shared/src/workflow/workflow-state.const.ts)
+  (single source of truth). **Terminal states** are `APPROVED` and `REJECTED`;
+  no further workflow mutations apply.
+- **Separation of duties**: The user who moves an application to
+  `REVIEW_COMPLETED` is recorded on `Application.reviewCompletedByUserId`.
+  The API returns **403** if that same user calls **approve** on that application.
+- **Concurrency**: Clients send `expectedVersion` on mutating requests; the API
+  uses conditional updates and returns **409 Conflict** when the version does
+  not match (optimistic locking).
+- **Audit**: Every material action creates an `AuditLog` row in the same
+  transaction as the state change. PostgreSQL triggers enforce **append-only**
+  audit storage at the database layer.
+
+For a compact transition table and HTTP mapping, see [`api-reference.md`](api-reference.md).
+
+## Workflow overview (high level)
+
+```mermaid
+stateDiagram-v2
+  direction LR
+  [*] --> DRAFT
+  DRAFT --> SUBMITTED
+  SUBMITTED --> UNDER_REVIEW
+  UNDER_REVIEW --> INFO_REQUESTED
+  UNDER_REVIEW --> REVIEW_COMPLETED
+  INFO_REQUESTED --> RESUBMITTED
+  RESUBMITTED --> UNDER_REVIEW
+  REVIEW_COMPLETED --> APPROVED
+  REVIEW_COMPLETED --> REJECTED
+  APPROVED --> [*]
+  REJECTED --> [*]
+```
 
 ## Future considerations
 

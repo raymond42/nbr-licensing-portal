@@ -7,6 +7,8 @@ export interface ApplicationDto {
   institutionName: string;
   licenseCategory: string;
   status: ApplicationStatus;
+  version: number;
+  reviewCompletedByUserId: string | null;
   submittedAt: string | null;
   decidedAt: string | null;
   createdAt: string;
@@ -27,7 +29,10 @@ export interface ApplicationDocumentDto {
   id: string;
   applicationId: string;
   type: DocumentType;
-  fileName: string;
-  fileSize: number;
+  logicalKey: string;
+  version: number;
+  originalFileName: string;
+  mimeType: string;
+  sizeBytes: number;
   uploadedAt: string;
 }
