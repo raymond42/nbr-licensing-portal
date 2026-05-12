@@ -18,7 +18,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
-import { ThemeToggle } from '@/components/theme-toggle';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,8 +73,6 @@ function HeaderActions({
           <span className="truncate text-foreground">{contextLabel}</span>
         </span>
       ) : null}
-
-      <ThemeToggle />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -147,23 +144,24 @@ export function AppShell({
     'border-b-2 border-transparent text-muted-foreground hover:bg-muted/40 hover:text-foreground';
 
   return (
-    <div className="min-h-screen bg-muted/50 dark:bg-background">
-      <header className="sticky top-0 z-40 border-b border-border bg-card/90 shadow-sm backdrop-blur-md dark:bg-card/95">
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-40 border-b border-border bg-card/95 shadow-sm backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
           <div className="flex min-w-0 items-center gap-3">
-            <div
-              className={cn(
-                'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white shadow-sm ring-1 ring-black/5 dark:ring-white/10',
-                accent === 'applicant' ? 'bg-applicant' : 'bg-brand',
-              )}
-            >
-              <ShieldCheck className="h-5 w-5" aria-hidden />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+              <ShieldCheck
+                className={cn(
+                  'h-7 w-7 shrink-0',
+                  accent === 'applicant' ? 'text-applicant' : 'text-brand',
+                )}
+                aria-hidden
+              />
             </div>
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                 {portalLabel}
               </p>
-              <p className="truncate text-lg font-semibold leading-tight text-foreground">BNR Licensing</p>
+              <p className="truncate text-lg font-semibold leading-tight text-foreground">NBR Licensing</p>
             </div>
           </div>
 

@@ -2,7 +2,7 @@
   "name": "nbr-licensing-portal",
   "version": "0.1.0",
   "private": true,
-  "description": "NBR Licensing Portal — regulatory workflow and compliance management platform for the National Bank of Rwanda.",
+  "description": "NBR Licensing Portal — assessment/demo regulatory workflow app (not affiliated with the National Bank of Rwanda).",
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"

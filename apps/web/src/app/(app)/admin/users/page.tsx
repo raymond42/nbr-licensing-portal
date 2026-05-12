@@ -129,7 +129,7 @@ export default function AdminUsersPage() {
       cell: (r) => (
         <span
           className={
-            r.isActive ? 'font-medium text-emerald-700 dark:text-emerald-400' : 'text-muted-foreground'
+            r.isActive ? 'font-medium text-emerald-400' : 'text-muted-foreground'
           }
         >
           {r.isActive ? 'Active' : 'Inactive'}
@@ -159,7 +159,7 @@ export default function AdminUsersPage() {
             icon={UserCheck}
             disabled={enableMut.isPending}
             onClick={() => void enableMut.mutate(r.id)}
-            className="hover:text-emerald-600 dark:hover:text-emerald-400"
+            className="hover:text-emerald-400"
           />
         ),
     },

@@ -7,12 +7,21 @@ import { ApplicationsService } from './applications.service';
 
 describe('ApplicationsService', () => {
   let service: ApplicationsService;
-  let prisma: { $transaction: jest.Mock };
+  let prisma: {
+    $transaction: jest.Mock;
+    application: { findMany: jest.Mock; count: jest.Mock };
+  };
   let workflow: { resolveTransition: jest.Mock };
   let audit: { append: jest.Mock; assertCanViewApplication: jest.Mock };
 
   beforeEach(() => {
-    prisma = { $transaction: jest.fn() };
+    prisma = {
+      $transaction: jest.fn(),
+      application: {
+        findMany: jest.fn().mockResolvedValue([]),
+        count: jest.fn().mockResolvedValue(0),
+      },
+    };
     workflow = { resolveTransition: jest.fn() };
     audit = {
       append: jest.fn(),
@@ -75,5 +84,35 @@ describe('ApplicationsService', () => {
     await expect(
       service.submit('app-1', { sub: 'applicant-1', email: 'a', role: Role.APPLICANT }, 99),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('list excludes drafts for admin viewers', async () => {
+    const findMany = prisma.application.findMany as jest.Mock;
+    const count = prisma.application.count as jest.Mock;
+
+    await service.list({ sub: 'admin-1', email: 'a', role: Role.ADMIN }, 0, 10);
+
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { NOT: { status: ApplicationStatus.DRAFT } },
+      }),
+    );
+    expect(count).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { NOT: { status: ApplicationStatus.DRAFT } },
+      }),
+    );
+  });
+
+  it('list scopes drafts to applicant only', async () => {
+    const findMany = prisma.application.findMany as jest.Mock;
+
+    await service.list({ sub: 'user-1', email: 'a', role: Role.APPLICANT }, 0, 10);
+
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { applicantId: 'user-1' },
+      }),
+    );
   });
 });

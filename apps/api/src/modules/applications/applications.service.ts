@@ -93,7 +93,7 @@ export class ApplicationsService {
     if (viewer.role === SharedRole.APPLICANT) {
       where = { applicantId: viewer.sub };
     } else if (viewer.role === SharedRole.ADMIN) {
-      where = {};
+      where = { NOT: { status: ApplicationStatus.DRAFT } };
     } else if (viewer.role === SharedRole.APPROVER) {
       where = { status: ApplicationStatus.REVIEW_COMPLETED };
     } else {

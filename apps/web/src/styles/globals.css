@@ -2,56 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Light canvas with brand greens (#023020 family) + pale gold (#D4A373 family).
+ * Green → headings/body/density; gold → CTAs, links, nav accents, borders.
+ */
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222.2 47.4% 11.2%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
-    /* NBR brand blue */
-    --primary: 217 86% 31%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 217 86% 31%;
-    --radius: 0.5rem;
-    /* Applicant accent (for scoped utility classes) */
-    --applicant-primary: 160 84% 25%;
-    --applicant-primary-foreground: 0 0% 100%;
-  }
+    --foreground: 159 55% 14%;
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 47% 8%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 47% 8%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217 70% 55%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 40%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 26% 20%;
-    --input: 217.2 26% 20%;
-    --ring: 217 70% 55%;
-    --applicant-primary: 158 64% 42%;
-    --applicant-primary-foreground: 0 0% 100%;
+    --card: 40 30% 99%;
+    --card-foreground: 159 55% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 159 55% 14%;
+
+    /* Gold fills / emphasis; forest green text on controls */
+    --primary: 30 53% 58%;
+    --primary-foreground: 159 92% 10%;
+
+    --secondary: 159 20% 96%;
+    --secondary-foreground: 159 45% 22%;
+
+    --muted: 159 18% 96%;
+    --muted-foreground: 159 16% 38%;
+
+    --accent: 30 45% 94%;
+    --accent-foreground: 159 50% 18%;
+
+    --destructive: 0 72% 46%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 22% 88%;
+    --input: 30 18% 88%;
+    --ring: 30 53% 48%;
+
+    --radius: 0.5rem;
+
+    /* Regulator — gold accent */
+    --brand: 30 53% 48%;
+    --brand-foreground: 159 92% 10%;
+    --brand-dark: 30 48% 42%;
+    --brand-light: 30 42% 92%;
+
+    /* Applicant — warmer gold */
+    --applicant-primary: 34 54% 52%;
+    --applicant-primary-foreground: 159 92% 10%;
+    --applicant-dark: 34 50% 44%;
+    --applicant-muted: 34 38% 94%;
   }
 
   * {
@@ -61,10 +59,6 @@
 
 :root {
   color-scheme: light;
-}
-
-html.dark {
-  color-scheme: dark;
 }
 
 html,

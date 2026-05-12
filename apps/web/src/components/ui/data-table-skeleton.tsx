@@ -15,7 +15,7 @@ export function DataTableSkeleton({
     <div
       className={cn(
         'overflow-hidden rounded-xl border border-border bg-card text-card-foreground',
-        variant === 'raised' ? 'shadow-card' : 'shadow-sm dark:border-white/10',
+        variant === 'raised' ? 'shadow-card' : 'shadow-sm',
       )}
       aria-busy
       aria-label="Loading table"

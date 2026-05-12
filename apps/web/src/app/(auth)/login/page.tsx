@@ -14,7 +14,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { homePathForRole } from '@/constants/routes';
 import { getApiErrorMessage } from '@/lib/api-client';
-import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 
 const schema = z.object({
@@ -25,7 +24,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 const inputClassName =
-  'mt-1.5 h-11 rounded-xl border-muted bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-primary dark:border-slate-600 dark:bg-slate-950/70 dark:text-slate-100 dark:placeholder:text-slate-500';
+  'mt-1.5 h-11 rounded-xl border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-ring';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -55,35 +54,17 @@ export default function LoginPage() {
   }
 
   return (
-    <main
-      className={cn(
-        'relative flex min-h-screen flex-col items-center justify-center px-4 py-12',
-        'bg-gradient-to-b from-slate-50 via-white to-slate-100',
-        'dark:from-[#070f1c] dark:via-[#0a1628] dark:to-black',
-      )}
-    >
+    <main className="relative flex min-h-screen flex-col items-center justify-center bg-background px-4 py-12">
       <div className="relative z-[1] w-full max-w-md">
-        <div
-          className={cn(
-            'rounded-2xl border p-8 shadow-card-lg backdrop-blur-md',
-            'border-slate-200/80 bg-white/85',
-            'dark:border-white/10 dark:bg-slate-900/55',
-          )}
-        >
+        <div className="rounded-2xl border border-border bg-card p-8 shadow-card-lg backdrop-blur-md">
           <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border shadow-sm',
-                'border-primary/20 bg-primary/10 text-primary',
-                'dark:border-primary/30 dark:bg-primary/15',
-              )}
-            >
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 text-primary shadow-sm">
               <ShieldCheck className="h-6 w-6" aria-hidden />
             </div>
             <div className="min-w-0 flex-1">
               <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground">Sign in</h1>
               <p className="mt-1 text-sm leading-snug text-muted-foreground">
-                National Bank of Rwanda — Licensing Portal
+                NBR Licensing Portal (assessment demo — not official NBR)
               </p>
             </div>
           </div>

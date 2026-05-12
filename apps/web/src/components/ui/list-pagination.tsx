@@ -27,7 +27,7 @@ export function ListPagination({
   return (
     <div
       className={cn(
-        'flex flex-col gap-3 rounded-lg border border-border bg-card/60 px-4 py-3 shadow-sm backdrop-blur-sm dark:bg-card/40 sm:flex-row sm:items-center sm:justify-between',
+        'flex flex-col gap-3 rounded-lg border border-border bg-card/50 px-4 py-3 shadow-sm backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between',
         className,
       )}
     >

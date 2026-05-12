@@ -10,3 +10,7 @@
 - **`lib/`** — Thin re-exports for backwards-compatible imports (`@/lib/utils`, etc.); new code should import from `@/shared/*` or `@/features/*` directly.
 
 Cross-package DTOs and enums live in **`@nbr/shared`**.
+
+---
+
+**Disclaimer:** This web app is part of a technical assessment and is **not** affiliated with or endorsed by the National Bank of Rwanda (NBR) or any official regulator.

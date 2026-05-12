@@ -41,14 +41,16 @@ const config: Config = {
           foreground: 'hsl(var(--card-foreground))',
         },
         brand: {
-          DEFAULT: '#0B3D91',
-          dark: '#072A66',
-          light: '#3B69C0',
+          DEFAULT: 'hsl(var(--brand))',
+          foreground: 'hsl(var(--brand-foreground))',
+          dark: 'hsl(var(--brand-dark))',
+          light: 'hsl(var(--brand-light))',
         },
         applicant: {
-          DEFAULT: '#047857',
-          dark: '#065f46',
-          muted: '#d1fae5',
+          DEFAULT: 'hsl(var(--applicant-primary))',
+          foreground: 'hsl(var(--applicant-primary-foreground))',
+          dark: 'hsl(var(--applicant-dark))',
+          muted: 'hsl(var(--applicant-muted))',
         },
       },
       borderRadius: {

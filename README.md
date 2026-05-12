@@ -1,8 +1,6 @@
 # NBR Licensing Portal
 
-Regulatory workflow and compliance management platform used by the
-**National Bank of Rwanda** to manage licensing applications for financial
-institutions.
+Demonstration regulatory workflow for licensing-style applications. This project is a **technical assessment / portfolio piece** and is **not** an official product of the National Bank of Rwanda or any government institution.
 
 This repository is a pnpm-workspace monorepo containing two independently
 deployable apps and a shared types package.
@@ -127,6 +125,6 @@ See [`docs/deployment.md`](docs/deployment.md) for full guidance.
 - [`docs/api-reference.md`](docs/api-reference.md) — REST endpoints, roles,
   workflow states (complement to Swagger at `/api/docs`).
 
-## License
+## Disclaimer
 
-Internal — National Bank of Rwanda. All rights reserved.
+This software is submitted for **assessment purposes only**. It is **not** affiliated with, endorsed by, or representative of the National Bank of Rwanda (NBR) or any regulator. Names, branding (e.g. “NBR”), and workflows are illustrative unless otherwise stated by the author.

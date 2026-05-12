@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getApiErrorMessage } from '@/lib/api-client';
-import { cn } from '@/lib/utils';
 import { register as registerApplicant } from '@/services/auth-api';
 
 const schema = z.object({
@@ -27,7 +26,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 const inputClassName =
-  'mt-1.5 h-11 rounded-xl border-muted bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-primary dark:border-slate-600 dark:bg-slate-950/70 dark:text-slate-100 dark:placeholder:text-slate-500';
+  'mt-1.5 h-11 rounded-xl border-input bg-background text-foreground shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-ring';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -55,21 +54,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <main
-      className={cn(
-        'relative flex min-h-screen flex-col items-center justify-center px-4 py-12',
-        'bg-gradient-to-b from-slate-50 via-white to-slate-100',
-        'dark:from-[#070f1c] dark:via-[#0a1628] dark:to-black',
-      )}
-    >
+    <main className="relative flex min-h-screen flex-col items-center justify-center bg-background px-4 py-12">
       <div className="relative z-[1] w-full max-w-md">
-        <div
-          className={cn(
-            'rounded-2xl border p-8 shadow-card-lg backdrop-blur-md',
-            'border-slate-200/80 bg-white/85',
-            'dark:border-white/10 dark:bg-slate-900/55',
-          )}
-        >
+        <div className="rounded-2xl border border-border bg-card p-8 shadow-card-lg backdrop-blur-md">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
             Applicant portal
           </p>
@@ -127,7 +114,8 @@ export default function RegisterPage() {
             ) : null}
             <Button
               type="submit"
-              className="h-11 w-full rounded-xl bg-applicant text-base font-semibold text-white shadow-sm hover:bg-applicant-dark"
+              variant="applicant"
+              className="h-11 w-full rounded-xl text-base font-semibold shadow-sm"
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Creating account…' : 'Create account'}

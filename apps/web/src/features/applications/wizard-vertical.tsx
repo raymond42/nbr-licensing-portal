@@ -15,7 +15,7 @@ export function WizardVertical({
   currentIndex: number;
 }) {
   return (
-    <ol className="space-y-4 border-r border-gray-200 pr-4">
+    <ol className="space-y-4 border-r border-border pr-4">
       {steps.map((s, i) => {
         const done = i < currentIndex;
         const current = i === currentIndex;
@@ -25,19 +25,19 @@ export function WizardVertical({
               className={cn(
                 'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 text-xs font-semibold',
                 done
-                  ? 'border-applicant bg-applicant text-white'
+                  ? 'border-applicant bg-applicant text-applicant-foreground'
                   : current
-                    ? 'border-applicant bg-white text-applicant'
-                    : 'border-gray-200 bg-white text-gray-400',
+                    ? 'border-applicant bg-background text-applicant'
+                    : 'border-border bg-muted text-muted-foreground',
               )}
             >
               {done ? <Check className="h-4 w-4" aria-hidden /> : i + 1}
             </span>
             <div>
-              <p className={cn('text-sm font-medium', current ? 'text-gray-900' : 'text-gray-500')}>
+              <p className={cn('text-sm font-medium', current ? 'text-foreground' : 'text-muted-foreground')}>
                 {s.title}
               </p>
-              <p className="text-xs text-gray-500">{s.description}</p>
+              <p className="text-xs text-muted-foreground">{s.description}</p>
             </div>
           </li>
         );
