@@ -4,9 +4,11 @@ import {
   Controller,
   Get,
   Param,
+  Query,
   ParseUUIDPipe,
   Patch,
   Post,
+  StreamableFile,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -26,6 +28,7 @@ import { memoryStorage } from 'multer';
 
 import { Role } from '@nbr/shared';
 
+import { parsePageTake } from '../../common/utils/pagination.util';
 import { SWAGGER_JWT_AUTH } from '../../common/swagger.constants';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -40,6 +43,7 @@ import {
   UpdateApplicationDto,
   UploadDocumentBodyDto,
   VersionedMutationDto,
+  VersionedNoteDto,
 } from './dto';
 import { ApplicationsService } from './applications.service';
 
@@ -63,15 +67,55 @@ export class ApplicationsController {
   @ApiOperation({ summary: 'Create a new application in DRAFT (applicant only)' })
   @ApiOkResponse({ type: ApplicationResponseDto })
   create(@CurrentUser() user: RequestUser, @Body() body: CreateApplicationDto) {
-    return this.applicationsService.create(user, body.institutionName, body.licenseCategory);
+    return this.applicationsService.create(
+      user,
+      body.institutionName,
+      body.licenseCategory,
+      body.description ?? '',
+    );
   }
 
   @Get()
   @Roles(Role.APPLICANT, Role.REVIEWER, Role.APPROVER, Role.ADMIN)
-  @ApiOperation({ summary: 'List applications visible to the caller' })
-  @ApiOkResponse({ type: ApplicationResponseDto, isArray: true })
-  list(@CurrentUser() user: RequestUser) {
-    return this.applicationsService.list(user);
+  @ApiOperation({ summary: 'List applications visible to the caller (paginated)' })
+  @ApiOkResponse({ description: 'Returns { items, total, page, take }' })
+  list(
+    @CurrentUser() user: RequestUser,
+    @Query('page') page?: string,
+    @Query('take') take?: string,
+  ) {
+    const { page: p, take: t } = parsePageTake(page, take);
+    return this.applicationsService.list(user, p, t);
+  }
+
+  @Get(':id/documents')
+  @Roles(Role.APPLICANT, Role.REVIEWER, Role.APPROVER, Role.ADMIN)
+  @ApiOperation({ summary: 'List documents for an application (metadata only)' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ type: ApplicationDocumentResponseDto, isArray: true })
+  listDocuments(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: RequestUser) {
+    return this.documentsService.listForApplication(id, user);
+  }
+
+  @Get(':id/documents/:documentId/file')
+  @Roles(Role.APPLICANT, Role.REVIEWER, Role.APPROVER, Role.ADMIN)
+  @ApiOperation({ summary: 'Download document file' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiParam({ name: 'documentId', format: 'uuid' })
+  async downloadDocument(
+    @Param('id', ParseUUIDPipe) applicationId: string,
+    @Param('documentId', ParseUUIDPipe) documentId: string,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const { stream, fileName, mimeType } = await this.documentsService.openDownloadStream(
+      applicationId,
+      documentId,
+      user,
+    );
+    return new StreamableFile(stream, {
+      type: mimeType,
+      disposition: `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`,
+    });
   }
 
   @Get(':id')
@@ -85,7 +129,10 @@ export class ApplicationsController {
 
   @Patch(':id')
   @Roles(Role.APPLICANT)
-  @ApiOperation({ summary: 'Update draft fields (DRAFT only); requires expectedVersion' })
+  @ApiOperation({
+    summary:
+      'Update fields (DRAFT: institution, category, description; INFO_REQUESTED: description only)',
+  })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ type: ApplicationResponseDto })
   updateDraft(
@@ -144,9 +191,9 @@ export class ApplicationsController {
   requestInfo(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: RequestUser,
-    @Body() body: VersionedMutationDto,
+    @Body() body: VersionedNoteDto,
   ) {
-    return this.applicationsService.requestInfo(id, user, body.expectedVersion);
+    return this.applicationsService.requestInfo(id, user, body.expectedVersion, body.note);
   }
 
   @Post(':id/complete-review')
@@ -157,9 +204,9 @@ export class ApplicationsController {
   completeReview(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: RequestUser,
-    @Body() body: VersionedMutationDto,
+    @Body() body: VersionedNoteDto,
   ) {
-    return this.applicationsService.completeReview(id, user, body.expectedVersion);
+    return this.applicationsService.completeReview(id, user, body.expectedVersion, body.note);
   }
 
   @Post(':id/resubmit')
@@ -183,9 +230,9 @@ export class ApplicationsController {
   approve(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: RequestUser,
-    @Body() body: VersionedMutationDto,
+    @Body() body: VersionedNoteDto,
   ) {
-    return this.applicationsService.approve(id, user, body.expectedVersion);
+    return this.applicationsService.approve(id, user, body.expectedVersion, body.note);
   }
 
   @Post(':id/reject')
@@ -196,9 +243,9 @@ export class ApplicationsController {
   reject(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: RequestUser,
-    @Body() body: VersionedMutationDto,
+    @Body() body: VersionedNoteDto,
   ) {
-    return this.applicationsService.reject(id, user, body.expectedVersion);
+    return this.applicationsService.reject(id, user, body.expectedVersion, body.note);
   }
 
   @Post(':id/documents')

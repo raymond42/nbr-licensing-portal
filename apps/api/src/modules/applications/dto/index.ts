@@ -4,3 +4,4 @@ export * from './create-application.dto';
 export * from './update-application.dto';
 export * from './upload-document.dto';
 export * from './versioned.dto';
+export * from './versioned-note.dto';

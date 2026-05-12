@@ -5,6 +5,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { AuditAction, ApplicationStatus } from '@prisma/client';
 
 import { ApplicationStatus as SharedAppStatus, Role as SharedRole } from '@nbr/shared';
@@ -28,6 +29,7 @@ export class ApplicationsService {
     applicantId: string;
     institutionName: string;
     licenseCategory: string;
+    description: string;
     status: ApplicationStatus;
     version: number;
     reviewCompletedByUserId: string | null;
@@ -41,6 +43,7 @@ export class ApplicationsService {
       applicantId: app.applicantId,
       institutionName: app.institutionName,
       licenseCategory: app.licenseCategory,
+      description: app.description,
       status: app.status as SharedAppStatus,
       version: app.version,
       reviewCompletedByUserId: app.reviewCompletedByUserId,
@@ -51,7 +54,12 @@ export class ApplicationsService {
     };
   }
 
-  async create(user: RequestUser, institutionName: string, licenseCategory: string) {
+  async create(
+    user: RequestUser,
+    institutionName: string,
+    licenseCategory: string,
+    description = '',
+  ) {
     if (user.role !== SharedRole.APPLICANT) {
       throw new ForbiddenException('Only applicants may create applications');
     }
@@ -62,6 +70,7 @@ export class ApplicationsService {
           applicantId: user.sub,
           institutionName,
           licenseCategory,
+          description,
           status: ApplicationStatus.DRAFT,
         },
       });
@@ -78,23 +87,33 @@ export class ApplicationsService {
     return this.toResponse(application);
   }
 
-  async list(viewer: RequestUser) {
+  async list(viewer: RequestUser, page: number, take: number) {
+    const skip = page * take;
+    let where: Prisma.ApplicationWhereInput = {};
     if (viewer.role === SharedRole.APPLICANT) {
-      const rows = await this.prisma.application.findMany({
-        where: { applicantId: viewer.sub },
+      where = { applicantId: viewer.sub };
+    } else if (viewer.role === SharedRole.ADMIN) {
+      where = {};
+    } else if (viewer.role === SharedRole.APPROVER) {
+      where = { status: ApplicationStatus.REVIEW_COMPLETED };
+    } else {
+      where = { NOT: { status: ApplicationStatus.DRAFT } };
+    }
+    const [rows, total] = await Promise.all([
+      this.prisma.application.findMany({
+        where,
         orderBy: { updatedAt: 'desc' },
-      });
-      return rows.map((a) => this.toResponse(a));
-    }
-    if (viewer.role === SharedRole.ADMIN) {
-      const rows = await this.prisma.application.findMany({ orderBy: { updatedAt: 'desc' } });
-      return rows.map((a) => this.toResponse(a));
-    }
-    const rows = await this.prisma.application.findMany({
-      where: { NOT: { status: ApplicationStatus.DRAFT } },
-      orderBy: { updatedAt: 'desc' },
-    });
-    return rows.map((a) => this.toResponse(a));
+        skip,
+        take,
+      }),
+      this.prisma.application.count({ where }),
+    ]);
+    return {
+      items: rows.map((a) => this.toResponse(a)),
+      total,
+      page,
+      take,
+    };
   }
 
   async findOne(id: string, viewer: RequestUser) {
@@ -110,12 +129,15 @@ export class ApplicationsService {
     id: string,
     viewer: RequestUser,
     expectedVersion: number,
-    patch: { institutionName?: string; licenseCategory?: string },
+    patch: { institutionName?: string; licenseCategory?: string; description?: string },
   ) {
     if (viewer.role !== SharedRole.APPLICANT) {
       throw new ForbiddenException('Only applicants may edit draft applications');
     }
-    if (!patch.institutionName && !patch.licenseCategory) {
+    const hasInst = patch.institutionName !== undefined;
+    const hasLic = patch.licenseCategory !== undefined;
+    const hasDesc = patch.description !== undefined;
+    if (!hasInst && !hasLic && !hasDesc) {
       throw new UnprocessableEntityException('No fields to update');
     }
 
@@ -124,24 +146,51 @@ export class ApplicationsService {
       if (!current || current.applicantId !== viewer.sub) {
         throw new NotFoundException('Application not found');
       }
-      if (current.status !== ApplicationStatus.DRAFT) {
-        throw new UnprocessableEntityException('Application can only be edited in DRAFT');
-      }
 
-      const result = await tx.application.updateMany({
-        where: {
-          id,
-          version: expectedVersion,
-          applicantId: viewer.sub,
-          status: ApplicationStatus.DRAFT,
-        },
-        data: {
-          ...patch,
-          version: { increment: 1 },
-        },
-      });
-      if (result.count !== 1) {
-        throw new ConflictException('Application version mismatch; refresh and retry');
+      const data: {
+        institutionName?: string;
+        licenseCategory?: string;
+        description?: string;
+        version: { increment: number };
+      } = { version: { increment: 1 } };
+
+      if (current.status === ApplicationStatus.DRAFT) {
+        if (hasInst) data.institutionName = patch.institutionName;
+        if (hasLic) data.licenseCategory = patch.licenseCategory;
+        if (hasDesc) data.description = patch.description;
+        const result = await tx.application.updateMany({
+          where: {
+            id,
+            version: expectedVersion,
+            applicantId: viewer.sub,
+            status: ApplicationStatus.DRAFT,
+          },
+          data,
+        });
+        if (result.count !== 1) {
+          throw new ConflictException('Application version mismatch; refresh and retry');
+        }
+      } else if (current.status === ApplicationStatus.INFO_REQUESTED) {
+        if (hasInst || hasLic) {
+          throw new UnprocessableEntityException(
+            'Only description may be updated while information is requested',
+          );
+        }
+        data.description = patch.description;
+        const result = await tx.application.updateMany({
+          where: {
+            id,
+            version: expectedVersion,
+            applicantId: viewer.sub,
+            status: ApplicationStatus.INFO_REQUESTED,
+          },
+          data,
+        });
+        if (result.count !== 1) {
+          throw new ConflictException('Application version mismatch; refresh and retry');
+        }
+      } else {
+        throw new UnprocessableEntityException('Application cannot be edited in this status');
       }
 
       const next = await tx.application.findUniqueOrThrow({ where: { id } });
@@ -149,8 +198,8 @@ export class ApplicationsService {
         applicationId: id,
         actorUserId: viewer.sub,
         action: AuditAction.APPLICATION_UPDATED,
-        previousStatus: ApplicationStatus.DRAFT,
-        nextStatus: ApplicationStatus.DRAFT,
+        previousStatus: next.status,
+        nextStatus: next.status,
       });
       return next;
     });
@@ -163,6 +212,7 @@ export class ApplicationsService {
     viewer: RequestUser,
     expectedVersion: number,
     action: WorkflowHttpAction,
+    note?: string,
   ) {
     const updated = await this.prisma.$transaction(async (tx) => {
       const app = await tx.application.findUnique({ where: { id } });
@@ -215,12 +265,16 @@ export class ApplicationsService {
       }
 
       const next = await tx.application.findUniqueOrThrow({ where: { id } });
+      const metadata: Prisma.InputJsonValue | undefined = note
+        ? ({ note: note.trim() } as Prisma.InputJsonValue)
+        : undefined;
       await this.auditService.append(tx, {
         applicationId: id,
         actorUserId: viewer.sub,
         action: AuditAction.STATUS_CHANGED,
         previousStatus: from,
         nextStatus: to,
+        metadata,
       });
 
       return next;
@@ -241,23 +295,29 @@ export class ApplicationsService {
     return this.runTransition(id, viewer, expectedVersion, WorkflowHttpAction.CONTINUE_REVIEW);
   }
 
-  requestInfo(id: string, viewer: RequestUser, expectedVersion: number) {
-    return this.runTransition(id, viewer, expectedVersion, WorkflowHttpAction.REQUEST_INFO);
+  requestInfo(id: string, viewer: RequestUser, expectedVersion: number, note?: string) {
+    return this.runTransition(id, viewer, expectedVersion, WorkflowHttpAction.REQUEST_INFO, note);
   }
 
-  completeReview(id: string, viewer: RequestUser, expectedVersion: number) {
-    return this.runTransition(id, viewer, expectedVersion, WorkflowHttpAction.COMPLETE_REVIEW);
+  completeReview(id: string, viewer: RequestUser, expectedVersion: number, note?: string) {
+    return this.runTransition(
+      id,
+      viewer,
+      expectedVersion,
+      WorkflowHttpAction.COMPLETE_REVIEW,
+      note,
+    );
   }
 
   resubmit(id: string, viewer: RequestUser, expectedVersion: number) {
     return this.runTransition(id, viewer, expectedVersion, WorkflowHttpAction.RESUBMIT);
   }
 
-  approve(id: string, viewer: RequestUser, expectedVersion: number) {
-    return this.runTransition(id, viewer, expectedVersion, WorkflowHttpAction.APPROVE);
+  approve(id: string, viewer: RequestUser, expectedVersion: number, note?: string) {
+    return this.runTransition(id, viewer, expectedVersion, WorkflowHttpAction.APPROVE, note);
   }
 
-  reject(id: string, viewer: RequestUser, expectedVersion: number) {
-    return this.runTransition(id, viewer, expectedVersion, WorkflowHttpAction.REJECT);
+  reject(id: string, viewer: RequestUser, expectedVersion: number, note?: string) {
+    return this.runTransition(id, viewer, expectedVersion, WorkflowHttpAction.REJECT, note);
   }
 }

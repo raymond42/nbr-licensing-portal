@@ -14,6 +14,9 @@ export class ApplicationResponseDto {
   @ApiProperty()
   licenseCategory!: string;
 
+  @ApiProperty()
+  description!: string;
+
   @ApiProperty({ enum: ApplicationStatus })
   status!: ApplicationStatus;
 

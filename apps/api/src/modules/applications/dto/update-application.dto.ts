@@ -17,4 +17,10 @@ export class UpdateApplicationDto extends VersionedMutationDto {
   @MinLength(2)
   @MaxLength(128)
   licenseCategory?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(20000)
+  description?: string;
 }

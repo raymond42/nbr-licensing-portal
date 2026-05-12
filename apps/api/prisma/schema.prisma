@@ -67,6 +67,7 @@ model Application {
   applicant                User              @relation("ApplicantApplications", fields: [applicantId], references: [id])
   institutionName          String
   licenseCategory          String
+  description              String            @default("") @db.Text
   status                   ApplicationStatus @default(DRAFT)
   version                  Int               @default(0)
   reviewCompletedByUserId  String?
@@ -115,8 +116,10 @@ model AuditLog {
   previousStatus  ApplicationStatus?
   nextStatus      ApplicationStatus?
   metadata        Json?
+  integrityHash   String?
   createdAt       DateTime           @default(now())
 
   @@index([applicationId, createdAt])
+  @@index([createdAt, id])
   @@map("audit_logs")
 }

@@ -14,6 +14,7 @@ the API host (e.g. `http://localhost:3001/api/docs` in development; spec at `/ap
 | ------ | ---- | ----------- |
 | `POST` | `/api/auth/login` | Body: `email`, `password`. Returns `accessToken`, `expiresInSeconds`, `user`. |
 | `GET`  | `/api/users/me`    | Current user profile (requires JWT). |
+| `GET`  | `/api/users`       | List all users (`ADMIN` only). |
 
 ## Applications
 
@@ -23,25 +24,36 @@ non-negative) for optimistic locking; mismatch returns **409 Conflict**.
 
 | Method | Path | Roles (typical) | Description |
 | ------ | ---- | --------------- | ----------- |
-| `POST`   | `/api/applications` | `APPLICANT` | Create draft. |
+| `POST`   | `/api/applications` | `APPLICANT` | Create draft. Optional `description` (defaults to empty). |
 | `GET`    | `/api/applications` | `APPLICANT`, `REVIEWER`, `APPROVER`, `ADMIN` | List (applicant: own; staff: non-draft queue policy; admin: all). |
 | `GET`    | `/api/applications/:id` | Same | Get one (visibility rules apply). |
-| `PATCH`  | `/api/applications/:id` | `APPLICANT` | Update draft fields only (`institutionName`, `licenseCategory`) + `expectedVersion`. |
+| `PATCH`  | `/api/applications/:id` | `APPLICANT` | `DRAFT`: `institutionName`, `licenseCategory`, `description`; `INFO_REQUESTED`: `description` only. Requires `expectedVersion`. |
 | `POST`   | `/api/applications/:id/submit` | `APPLICANT` | `DRAFT` → `SUBMITTED`. |
 | `POST`   | `/api/applications/:id/start-review` | `REVIEWER` | `SUBMITTED` → `UNDER_REVIEW`. |
 | `POST`   | `/api/applications/:id/continue-review` | `REVIEWER` | `RESUBMITTED` → `UNDER_REVIEW`. |
-| `POST`   | `/api/applications/:id/request-info` | `REVIEWER` | `UNDER_REVIEW` → `INFO_REQUESTED`. |
-| `POST`   | `/api/applications/:id/complete-review` | `REVIEWER` | `UNDER_REVIEW` → `REVIEW_COMPLETED`. |
+| `POST`   | `/api/applications/:id/request-info` | `REVIEWER` | `UNDER_REVIEW` → `INFO_REQUESTED`. Body: `expectedVersion`, optional `note` (stored in audit metadata). |
+| `POST`   | `/api/applications/:id/complete-review` | `REVIEWER` | `UNDER_REVIEW` → `REVIEW_COMPLETED`. Optional `note`. |
 | `POST`   | `/api/applications/:id/resubmit` | `APPLICANT` | `INFO_REQUESTED` → `RESUBMITTED`. |
-| `POST`   | `/api/applications/:id/approve` | `APPROVER` | `REVIEW_COMPLETED` → `APPROVED`. **403** if approver is the same user who completed review. |
-| `POST`   | `/api/applications/:id/reject` | `APPROVER` | `REVIEW_COMPLETED` → `REJECTED`. |
+| `POST`   | `/api/applications/:id/approve` | `APPROVER` | `REVIEW_COMPLETED` → `APPROVED`. **403** if approver is the same user who completed review. Optional `note`. |
+| `POST`   | `/api/applications/:id/reject` | `APPROVER` | `REVIEW_COMPLETED` → `REJECTED`. Optional `note`. |
 | `POST`   | `/api/applications/:id/documents` | `APPLICANT` | Multipart: `file`, `type` (enum), `logicalKey`, `expectedVersion`. Max file size **5MB** (server-enforced). |
+| `GET`    | `/api/applications/:id/documents` | `APPLICANT`, `REVIEWER`, `APPROVER`, `ADMIN` | List document metadata (no storage paths). |
+| `GET`    | `/api/applications/:applicationId/documents/:documentId/file` | Same | Download file bytes (`Content-Disposition: attachment`). |
 
 ## Audit logs
 
 | Method | Path | Description |
 | ------ | ---- | ----------- |
 | `GET` | `/api/audit-logs/:applicationId` | Chronological audit trail for an application (authorization follows application visibility). |
+
+New audit rows include an **`integrityHash`** (SHA-256 of canonical fields) for tamper detection. Older rows may have `integrityHash: null`.
+
+### Admin — global audit (`ADMIN` only)
+
+| Method | Path | Description |
+| ------ | ---- | ----------- |
+| `GET` | `/api/admin/audit-logs?page=&take=` | Paginated global audit log (ordered by time, then id). |
+| `POST` | `/api/admin/audit-logs/verify` | Recomputes hashes for all rows that have `integrityHash`; reports first mismatch if any. |
 
 There are **no** update or delete endpoints for audit rows; immutability is
 also enforced in PostgreSQL on `audit_logs`.

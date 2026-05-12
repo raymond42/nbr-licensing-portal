@@ -3,8 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 
-import type { LoginResponseDto, Role } from '@nbr/shared';
+import type { LoginResponseDto, RegisterApplicantResponseDto, Role } from '@nbr/shared';
 
+import type { RegisterApplicantDto } from './dto';
 import type { JwtPayload } from './strategies/jwt.strategy';
 import { UsersService } from '../users/users.service';
 
@@ -28,6 +29,10 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
   ) {}
+
+  async registerApplicant(dto: RegisterApplicantDto): Promise<RegisterApplicantResponseDto> {
+    return this.usersService.registerApplicant(dto);
+  }
 
   async login(email: string, password: string): Promise<LoginResponseDto> {
     const user = await this.usersService.findByEmailWithCredentials(email);

@@ -18,9 +18,6 @@ export class ApplicationDocumentResponseDto {
   version!: number;
 
   @ApiProperty()
-  storagePath!: string;
-
-  @ApiProperty()
   originalFileName!: string;
 
   @ApiProperty()
@@ -36,5 +33,5 @@ export class ApplicationDocumentResponseDto {
   uploadedByUserId!: string;
 
   @ApiProperty()
-  createdAt!: Date;
+  uploadedAt!: string;
 }

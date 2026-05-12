@@ -5,3 +5,4 @@ export * from './workflow/workflow-state.const';
 export * from './dto/auth.dto';
 export * from './dto/user.dto';
 export * from './dto/application.dto';
+export * from './dto/paginated.dto';

@@ -1,7 +1,10 @@
+import { createReadStream } from 'fs';
+import { access } from 'fs/promises';
 import { mkdir, unlink, writeFile } from 'fs/promises';
-import { join } from 'path';
+import { isAbsolute, join, normalize, relative, resolve } from 'path';
 
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -17,6 +20,7 @@ import { randomUUID } from 'crypto';
 
 import { Role } from '@nbr/shared';
 
+import type { RequestUser } from '../../common/types/jwt-payload.type';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 
@@ -30,6 +34,79 @@ export class DocumentsService {
 
   private uploadRoot(): string {
     return this.config.get<string>('UPLOAD_DIR', './uploads');
+  }
+
+  private toPublicDocument(doc: {
+    id: string;
+    applicationId: string;
+    type: DocumentType;
+    logicalKey: string;
+    version: number;
+    originalFileName: string;
+    mimeType: string;
+    sizeBytes: number;
+    checksum: string | null;
+    uploadedByUserId: string;
+    createdAt: Date;
+  }) {
+    return {
+      id: doc.id,
+      applicationId: doc.applicationId,
+      type: doc.type,
+      logicalKey: doc.logicalKey,
+      version: doc.version,
+      originalFileName: doc.originalFileName,
+      mimeType: doc.mimeType,
+      sizeBytes: doc.sizeBytes,
+      checksum: doc.checksum,
+      uploadedByUserId: doc.uploadedByUserId,
+      uploadedAt: doc.createdAt.toISOString(),
+    };
+  }
+
+  async listForApplication(applicationId: string, viewer: RequestUser) {
+    const application = await this.prisma.application.findUnique({ where: { id: applicationId } });
+    if (!application) {
+      throw new NotFoundException('Application not found');
+    }
+    this.auditService.assertCanViewApplication(viewer, application);
+
+    const rows = await this.prisma.applicationDocument.findMany({
+      where: { applicationId },
+      orderBy: [{ logicalKey: 'asc' }, { version: 'desc' }],
+    });
+    return rows.map((d) => this.toPublicDocument(d));
+  }
+
+  async openDownloadStream(applicationId: string, documentId: string, viewer: RequestUser) {
+    const doc = await this.prisma.applicationDocument.findFirst({
+      where: { id: documentId, applicationId },
+      include: { application: true },
+    });
+    if (!doc) {
+      throw new NotFoundException('Document not found');
+    }
+    this.auditService.assertCanViewApplication(viewer, doc.application);
+
+    const root = resolve(this.uploadRoot());
+    const rel = normalize(doc.storagePath).replace(/^(\.\.(\/|\\|$))+/, '');
+    const absolute = resolve(join(root, rel));
+    const relToRoot = relative(root, absolute);
+    if (relToRoot.startsWith('..') || isAbsolute(relToRoot)) {
+      throw new BadRequestException('Invalid storage path');
+    }
+
+    try {
+      await access(absolute);
+    } catch {
+      throw new NotFoundException('File not found on disk');
+    }
+
+    return {
+      stream: createReadStream(absolute),
+      fileName: doc.originalFileName,
+      mimeType: doc.mimeType,
+    };
   }
 
   private assertApplicantMayUpload(status: ApplicationStatus): void {
@@ -133,7 +210,7 @@ export class DocumentsService {
           } as Prisma.InputJsonValue,
         });
 
-        return doc;
+        return this.toPublicDocument(doc);
       });
     } catch (err) {
       await unlink(absolutePath).catch(() => undefined);

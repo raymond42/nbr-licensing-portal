@@ -17,3 +17,15 @@ export interface LoginResponseDto {
   expiresInSeconds: number;
   user: AuthenticatedUserDto;
 }
+
+export interface RegisterApplicantRequestDto {
+  fullName: string;
+  email: string;
+  password: string;
+}
+
+export interface RegisterApplicantResponseDto {
+  id: string;
+  email: string;
+  fullName: string;
+}
