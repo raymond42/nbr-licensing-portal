@@ -1,6 +1,5 @@
 import { Role } from '@nbr/shared';
 
-/** Path prefixes where `AppShell` wraps authenticated workspace routes. */
 export const APP_SHELL_PATH_PREFIXES = ['/applicant', '/admin', '/reviewer', '/approver'] as const;
 
 export function isAppShellRoute(pathname: string | null): boolean {

@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/*
- * Light canvas with brand greens (#023020 family) + pale gold (#D4A373 family).
- * Green → headings/body/density; gold → CTAs, links, nav accents, borders.
- */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -17,7 +13,6 @@
     --popover: 0 0% 100%;
     --popover-foreground: 159 55% 14%;
 
-    /* Gold fills / emphasis; forest green text on controls */
     --primary: 30 53% 58%;
     --primary-foreground: 159 92% 10%;
 
@@ -39,13 +34,11 @@
 
     --radius: 0.5rem;
 
-    /* Regulator — gold accent */
     --brand: 30 53% 48%;
     --brand-foreground: 159 92% 10%;
     --brand-dark: 30 48% 42%;
     --brand-light: 30 42% 92%;
 
-    /* Applicant — warmer gold */
     --applicant-primary: 34 54% 52%;
     --applicant-primary-foreground: 159 92% 10%;
     --applicant-dark: 34 50% 44%;

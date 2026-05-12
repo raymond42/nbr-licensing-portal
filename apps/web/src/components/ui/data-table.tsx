@@ -21,7 +21,6 @@ export function DataTable<T>({
   rows: T[];
   empty?: ReactNode;
   getRowKey: (row: T) => string;
-  /** Raised card matches regulator mockup tables */
   variant?: 'raised' | 'flat';
 }) {
   if (rows.length === 0) {

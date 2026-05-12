@@ -30,9 +30,9 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-card/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+    <div className="min-h-screen h-screen bg-background text-foreground">
+      <header className="border-b border-border bg-card/80 backdrop-blur h-[10%] items-center">
+        <div className="mx-auto h-full flex items-center max-w-6xl items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center text-foreground">
               <ShieldCheck className="h-4 w-4" aria-hidden />
@@ -41,7 +41,10 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+            <Link
+              href="/login"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
               Sign in
             </Link>
             <Link
@@ -54,14 +57,15 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-col items-center px-4 py-14 text-center sm:py-20">
-        <div className="max-w-3xl">
+      <main className="mx-auto h-[90%] flex w-full items-center justify-center flex-col  items-center px-4 text-center gap-6">
+        <div className="max-w-3xl flex flex-col gap-4">
           <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl md:text-5xl">
             Bank Licensing &amp; Compliance Portal
           </h1>
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
-            Demo portal for bank licensing–style workflows: submit, review, and approve applications with a tamper-evident audit trail. For assessment
-            purposes only; not an official regulator product.
+            Demo portal for bank licensing–style workflows: submit, review, and approve applications
+            with a tamper-evident audit trail. For assessment purposes only; not an official
+            regulator product.
           </p>
 
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -85,7 +89,9 @@ export default function HomePage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-foreground">
               <FileText className="h-5 w-5" aria-hidden />
             </div>
-            <h3 className="mt-4 text-base font-semibold text-card-foreground">Versioned documents</h3>
+            <h3 className="mt-4 text-base font-semibold text-card-foreground">
+              Versioned documents
+            </h3>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               Every resubmission preserves prior versions. Nothing is silently overwritten.
             </p>
@@ -95,7 +101,9 @@ export default function HomePage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-foreground">
               <Users className="h-5 w-5" aria-hidden />
             </div>
-            <h3 className="mt-4 text-base font-semibold text-card-foreground">Segregation of duties</h3>
+            <h3 className="mt-4 text-base font-semibold text-card-foreground">
+              Segregation of duties
+            </h3>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               The reviewer who recommends approval can never be the approver who issues it.
             </p>
@@ -105,7 +113,9 @@ export default function HomePage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-foreground">
               <Zap className="h-5 w-5" aria-hidden />
             </div>
-            <h3 className="mt-4 text-base font-semibold text-card-foreground">Tamper-evident history</h3>
+            <h3 className="mt-4 text-base font-semibold text-card-foreground">
+              Tamper-evident history
+            </h3>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               Every action is recorded in an audit trail you can verify at any time.
             </p>

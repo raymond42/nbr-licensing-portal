@@ -62,16 +62,21 @@ export default function LoginPage() {
               <ShieldCheck className="h-6 w-6" aria-hidden />
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground">Sign in</h1>
+              <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground">
+                Sign in
+              </h1>
               <p className="mt-1 text-sm leading-snug text-muted-foreground">
-                NBR Licensing Portal (assessment demo — not official NBR)
+                NBR Licensing Portal
               </p>
             </div>
           </div>
 
           <form className="mt-8 flex flex-col gap-5" onSubmit={handleSubmit(onSubmit)} noValidate>
             <div>
-              <Label htmlFor="email" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <Label
+                htmlFor="email"
+                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+              >
                 Email
               </Label>
               <Input

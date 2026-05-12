@@ -30,7 +30,6 @@ import { initialsFromFullName } from '@/lib/user-display';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 
-/** Serializable nav icon id (resolved to Lucide icons only inside this client module). */
 export type NavIconId =
   | 'my-applications'
   | 'admin-applications'

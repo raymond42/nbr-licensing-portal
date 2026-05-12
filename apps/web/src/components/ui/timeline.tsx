@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-/** Vertical timeline primitives (replace with shadcn registry `timeline` when available). */
 const Timeline = React.forwardRef<HTMLUListElement, React.HTMLAttributes<HTMLUListElement>>(
   ({ className, ...props }, ref) => (
     <ul ref={ref} role="list" className={cn('space-y-0', className)} {...props} />

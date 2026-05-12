@@ -51,7 +51,6 @@ export function DataTableSkeleton({
   );
 }
 
-/** Compact placeholder for card bodies (documents, activity, etc.). */
 export function CardContentSkeleton({ lines = 3 }: { lines?: number }) {
   const widths = ['w-[88%]', 'w-[55%]', 'w-[72%]', 'w-[64%]'] as const;
   return (
