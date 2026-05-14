@@ -10,6 +10,8 @@ export interface AuthenticatedUserDto {
   email: string;
   fullName: string;
   role: Role;
+  institutionName?: string | null;
+  institutionCategory?: string | null;
 }
 
 export interface LoginResponseDto {
@@ -22,10 +24,14 @@ export interface RegisterApplicantRequestDto {
   fullName: string;
   email: string;
   password: string;
+  institutionName: string;
+  institutionCategory: string;
 }
 
 export interface RegisterApplicantResponseDto {
   id: string;
   email: string;
   fullName: string;
+  institutionName?: string | null;
+  institutionCategory?: string | null;
 }

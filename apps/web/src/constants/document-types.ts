@@ -9,3 +9,7 @@ export const DOCUMENT_TYPE_OPTIONS: { value: DocumentType; label: string }[] = [
   { value: DocumentType.DIRECTOR_IDENTIFICATION, label: 'Director identification' },
   { value: DocumentType.OTHER, label: 'Other' },
 ];
+
+export function documentTypeLabel(type: DocumentType): string {
+  return DOCUMENT_TYPE_OPTIONS.find((option) => option.value === type)?.label ?? type;
+}

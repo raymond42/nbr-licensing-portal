@@ -20,6 +20,8 @@ const userListSelect = {
   id: true,
   email: true,
   fullName: true,
+  institutionName: true,
+  institutionCategory: true,
   role: true,
   isActive: true,
   createdAt: true,
@@ -45,7 +47,15 @@ export class UsersService {
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, fullName: true, role: true, createdAt: true },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        institutionName: true,
+        institutionCategory: true,
+        role: true,
+        createdAt: true,
+      },
     });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -66,7 +76,13 @@ export class UsersService {
     ]).then(([items, total]) => ({ items, total, page, take }));
   }
 
-  async registerApplicant(dto: { fullName: string; email: string; password: string }) {
+  async registerApplicant(dto: {
+    fullName: string;
+    email: string;
+    password: string;
+    institutionName: string;
+    institutionCategory: string;
+  }) {
     const email = dto.email.toLowerCase().trim();
     const existing = await this.prisma.user.findUnique({ where: { email } });
     if (existing) {
@@ -77,11 +93,19 @@ export class UsersService {
       data: {
         email,
         fullName: dto.fullName.trim(),
+        institutionName: dto.institutionName.trim(),
+        institutionCategory: dto.institutionCategory.trim(),
         role: PrismaRole.APPLICANT,
         passwordHash,
         isActive: false,
       },
-      select: { id: true, email: true, fullName: true },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        institutionName: true,
+        institutionCategory: true,
+      },
     });
   }
 

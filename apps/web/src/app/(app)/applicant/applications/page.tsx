@@ -26,7 +26,7 @@ export default function ApplicantApplicationsPage() {
   const take = APPLICATION_LIST_PAGE_SIZE;
 
   const q = useQuery({
-    queryKey: queryKeys.applications(page, take),
+    queryKey: queryKeys.applications(page, take, 'applicant'),
     queryFn: () => applicationsApi.listApplications({ page, take }),
   });
 

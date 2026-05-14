@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { RoleBadge } from '@/components/ui/role-badge';
+import { homePathForRole, settingsPathForRole } from '@/constants/routes';
 import { TrackedLink } from '@/providers/navigation-loading-provider';
 import { initialsFromFullName } from '@/lib/user-display';
 import { cn } from '@/lib/utils';
@@ -95,9 +96,11 @@ function HeaderActions({
             </div>
           </div>
           <DropdownMenuSeparator />
-          <DropdownMenuItem disabled className="gap-2 opacity-60">
-            <Settings className="h-4 w-4" aria-hidden />
-            Settings
+          <DropdownMenuItem asChild className="gap-2">
+            <TrackedLink href={settingsPathForRole(user.role as Role)}>
+              <Settings className="h-4 w-4" aria-hidden />
+              Settings
+            </TrackedLink>
           </DropdownMenuItem>
           <DropdownMenuItem
             className="gap-2 text-destructive focus:text-destructive"
@@ -133,6 +136,7 @@ export function AppShell({
   if (!user) return null;
 
   const initials = initialsFromFullName(user.fullName);
+  const hideNav = pathname.endsWith('/settings');
 
   const activeTabClass =
     accent === 'applicant'
@@ -146,7 +150,10 @@ export function AppShell({
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b border-border bg-card/95 shadow-sm backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <div className="flex min-w-0 items-center gap-3">
+          <TrackedLink
+            href={homePathForRole(user.role as Role)}
+            className="flex min-w-0 items-center gap-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center">
               <ShieldCheck
                 className={cn(
@@ -162,13 +169,14 @@ export function AppShell({
               </p>
               <p className="truncate text-lg font-semibold leading-tight text-foreground">NBR Licensing</p>
             </div>
-          </div>
+          </TrackedLink>
 
           <HeaderActions contextLabel={contextLabel} initials={initials} user={user} logout={logout} />
         </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-4 pb-8 pt-4">
+        {!hideNav ? (
         <div className="mb-6 border-b border-border/60 pb-0">
           <nav className="-mx-1 min-w-0 overflow-x-auto px-1 sm:mx-0 sm:px-0" aria-label="Primary">
             <div className="inline-flex min-h-[44px] w-full min-w-min items-end justify-start gap-1 md:min-h-0 md:w-auto md:gap-0">
@@ -194,6 +202,7 @@ export function AppShell({
             </div>
           </nav>
         </div>
+        ) : null}
 
         {children}
       </main>

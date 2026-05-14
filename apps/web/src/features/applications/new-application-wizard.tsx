@@ -1,7 +1,6 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { DocumentType } from '@nbr/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Send } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -14,14 +13,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { DOCUMENT_TYPE_OPTIONS } from '@/constants/document-types';
+import { documentTypeLabel } from '@/constants/document-types';
+import { LICENSE_CATEGORY_OPTIONS, LICENSE_CATEGORY_VALUES } from '@/constants/license-categories';
 import { getApiErrorMessage } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
 import { formatBytes } from '@/lib/format';
 import * as applicationsApi from '@/services/applications-api';
-import { assertFileSize, listDocuments, uploadDocument } from '@/services/documents-api';
-import { FileUpload } from '@/features/applications/file-upload';
+import { listDocuments, uploadDocument } from '@/services/documents-api';
+import {
+  DocumentUploadQueue,
+  type DocumentUploadItem,
+} from '@/features/applications/document-upload-queue';
 import { WizardVertical, type WizardStepDef } from '@/features/applications/wizard-vertical';
 import { TrackedLink, useNavigationLoading } from '@/providers/navigation-loading-provider';
 import { useAuth } from '@/hooks/use-auth';
@@ -35,7 +39,13 @@ const steps: WizardStepDef[] = [
 
 const step0Schema = z.object({
   institutionName: z.string().min(2, 'Minimum 2 characters').max(256),
-  licenseCategory: z.string().min(2, 'Minimum 2 characters').max(128),
+  licenseCategory: z
+    .string()
+    .min(1, 'Select a license category')
+    .refine(
+      (value) => LICENSE_CATEGORY_VALUES.includes(value as (typeof LICENSE_CATEGORY_VALUES)[number]),
+      'Select a valid license category',
+    ),
 });
 
 const step1Schema = z.object({
@@ -52,9 +62,7 @@ export function NewApplicationWizard() {
   const { user: authUser } = useAuth();
   const [step, setStep] = useState(0);
   const [applicationId, setApplicationId] = useState<string | null>(null);
-  const [docType, setDocType] = useState<DocumentType>(DocumentType.BUSINESS_PLAN);
-  const [logicalKey, setLogicalKey] = useState('BusinessPlan');
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [isSubmitRedirecting, setIsSubmitRedirecting] = useState(false);
 
   const appQuery = useQuery({
     queryKey: queryKeys.application(applicationId ?? ''),
@@ -70,7 +78,10 @@ export function NewApplicationWizard() {
 
   const app = appQuery.data;
 
-  const form0 = useForm<Step0>({ resolver: zodResolver(step0Schema) });
+  const form0 = useForm<Step0>({
+    resolver: zodResolver(step0Schema),
+    defaultValues: { institutionName: '', licenseCategory: '' },
+  });
   const form1 = useForm<Step1>({ resolver: zodResolver(step1Schema), defaultValues: { description: '' } });
 
   const createMut = useMutation({
@@ -101,7 +112,8 @@ export function NewApplicationWizard() {
       qc.setQueryData(queryKeys.application(data.id), data);
       await qc.invalidateQueries({ queryKey: ['applications'] });
       toast.success('Application submitted');
-      startNavigation();
+      setIsSubmitRedirecting(true);
+      startNavigation('/applicant/applications');
       router.push('/applicant/applications');
     },
     onError: (e) => toast.error(getApiErrorMessage(e)),
@@ -124,27 +136,22 @@ export function NewApplicationWizard() {
     setStep(2);
   }
 
-  async function onUpload(file: File) {
+  async function onUploadDocument(item: DocumentUploadItem, onProgress: (pct: number) => void) {
     if (!applicationId || !app) return;
-    try {
-      assertFileSize(file);
-      setUploadProgress(0);
-      await uploadDocument({
-        applicationId,
-        file,
-        type: docType,
-        logicalKey,
-        expectedVersion: app.version,
-        onProgress: setUploadProgress,
-      });
-      setUploadProgress(null);
-      await qc.invalidateQueries({ queryKey: queryKeys.application(applicationId) });
-      await qc.invalidateQueries({ queryKey: queryKeys.applicationDocuments(applicationId) });
-      toast.success('File uploaded');
-    } catch (e) {
-      setUploadProgress(null);
-      toast.error(getApiErrorMessage(e));
-    }
+    await uploadDocument({
+      applicationId,
+      file: item.file,
+      type: item.type,
+      logicalKey: item.logicalKey,
+      expectedVersion: app.version,
+      onProgress,
+    });
+  }
+
+  async function onDocumentsUploaded() {
+    if (!applicationId) return;
+    await qc.invalidateQueries({ queryKey: queryKeys.application(applicationId) });
+    await qc.invalidateQueries({ queryKey: queryKeys.applicationDocuments(applicationId) });
   }
 
   const summary = useMemo(() => {
@@ -203,7 +210,26 @@ export function NewApplicationWizard() {
                 </div>
                 <div>
                   <Label htmlFor="licenseCategory">License category</Label>
-                  <Input id="licenseCategory" className="mt-1" {...form0.register('licenseCategory')} />
+                  <Select
+                    value={form0.watch('licenseCategory')}
+                    onValueChange={(value) =>
+                      form0.setValue('licenseCategory', value, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                  >
+                    <SelectTrigger id="licenseCategory" className="mt-1">
+                      <SelectValue placeholder="Select a license category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LICENSE_CATEGORY_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {form0.formState.errors.licenseCategory ? (
                     <p className="mt-1 text-sm text-red-600">{form0.formState.errors.licenseCategory.message}</p>
                   ) : null}
@@ -255,41 +281,16 @@ export function NewApplicationWizard() {
                 <p className="text-sm text-gray-600">
                   Attach the materials a reviewer will need. Max 5 MB per file.
                 </p>
-                <div className="flex flex-wrap gap-3">
-                  <div>
-                    <Label htmlFor="docType">Document type</Label>
-                    <select
-                      id="docType"
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                      value={docType}
-                      onChange={(e) => setDocType(e.target.value as DocumentType)}
-                    >
-                      {DOCUMENT_TYPE_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex-1 min-w-[200px]">
-                    <Label htmlFor="logicalKey">Logical key / slot</Label>
-                    <Input
-                      id="logicalKey"
-                      className="mt-1"
-                      value={logicalKey}
-                      onChange={(e) => setLogicalKey(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <FileUpload id="wizard-upload" onFileSelected={(f) => void onUpload(f)} />
-                {uploadProgress !== null ? (
-                  <p className="text-sm text-gray-600">Uploading… {uploadProgress}%</p>
-                ) : null}
+                <DocumentUploadQueue
+                  id="wizard-upload"
+                  onUpload={onUploadDocument}
+                  onUploaded={onDocumentsUploaded}
+                />
                 <ul className="divide-y divide-gray-100 rounded-md border border-gray-200">
                   {(docsQuery.data ?? []).map((d) => (
                     <li key={d.id} className="flex items-center justify-between px-3 py-2 text-sm">
                       <span>
-                        {d.logicalKey}: {d.originalFileName} ({formatBytes(d.sizeBytes)})
+                        {documentTypeLabel(d.type)}: {d.originalFileName} ({formatBytes(d.sizeBytes)})
                       </span>
                     </li>
                   ))}
@@ -323,7 +324,7 @@ export function NewApplicationWizard() {
                     ) : (
                       summary.docs.map((d) => (
                         <li key={d.id}>
-                          {d.logicalKey}: {d.originalFileName}
+                          {documentTypeLabel(d.type)}: {d.originalFileName}
                         </li>
                       ))
                     )}
@@ -349,11 +350,11 @@ export function NewApplicationWizard() {
                     <Button
                       type="button"
                       variant="applicant"
-                      disabled={submitMut.isPending}
+                      disabled={submitMut.isPending || isSubmitRedirecting}
                       onClick={() => submitMut.mutate()}
                     >
                       <Send className="h-4 w-4" aria-hidden />
-                      Submit application
+                      {submitMut.isPending || isSubmitRedirecting ? 'Submitting...' : 'Submit application'}
                     </Button>
                   </div>
                 </div>

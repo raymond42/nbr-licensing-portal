@@ -10,12 +10,25 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { LICENSE_CATEGORY_OPTIONS, LICENSE_CATEGORY_VALUES } from '@/constants/license-categories';
 import { getApiErrorMessage } from '@/lib/api-client';
 import { TrackedLink, useNavigationLoading } from '@/providers/navigation-loading-provider';
 import { register as registerApplicant } from '@/services/auth-api';
 
 const schema = z.object({
   fullName: z.string().min(1, 'Full name is required').min(2, 'Enter at least 2 characters'),
+  institutionName: z
+    .string()
+    .min(1, 'Institution name is required')
+    .min(2, 'Enter at least 2 characters'),
+  institutionCategory: z
+    .string()
+    .min(1, 'Select an institution category')
+    .refine(
+      (value) => LICENSE_CATEGORY_VALUES.includes(value as (typeof LICENSE_CATEGORY_VALUES)[number]),
+      'Select a valid institution category',
+    ),
   email: z.string().min(1, 'Email is required').email('Enter a valid email'),
   password: z
     .string()
@@ -32,25 +45,35 @@ export default function RegisterPage() {
   const router = useRouter();
   const { startNavigation, stopNavigation } = useNavigationLoading();
   const [formError, setFormError] = useState<string | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { institutionCategory: '' },
+  });
 
   async function onSubmit(values: FormValues) {
     setFormError(null);
     try {
       await registerApplicant({
         fullName: values.fullName.trim(),
+        institutionName: values.institutionName.trim(),
+        institutionCategory: values.institutionCategory,
         email: values.email.trim(),
         password: values.password,
       });
       toast.success('Request received. You will be notified once provisioned.');
-      startNavigation();
+      setIsRedirecting(true);
+      startNavigation('/login');
       router.replace('/login');
     } catch (e) {
+      setIsRedirecting(false);
       stopNavigation();
       setFormError(getApiErrorMessage(e, 'Registration failed'));
     }
@@ -79,6 +102,52 @@ export default function RegisterPage() {
               {errors.fullName ? (
                 <p className="mt-1.5 text-sm text-destructive" role="alert">
                   {errors.fullName.message}
+                </p>
+              ) : null}
+            </div>
+            <div>
+              <Label htmlFor="institutionName" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Institution / bank name
+              </Label>
+              <Input
+                id="institutionName"
+                autoComplete="organization"
+                className={inputClassName}
+                {...register('institutionName')}
+              />
+              {errors.institutionName ? (
+                <p className="mt-1.5 text-sm text-destructive" role="alert">
+                  {errors.institutionName.message}
+                </p>
+              ) : null}
+            </div>
+            <div>
+              <Label htmlFor="institutionCategory" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Institution category
+              </Label>
+              <Select
+                value={watch('institutionCategory')}
+                onValueChange={(value) =>
+                  setValue('institutionCategory', value, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+              >
+                <SelectTrigger id="institutionCategory" className="mt-1.5">
+                  <SelectValue placeholder="Select an institution category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LICENSE_CATEGORY_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.institutionCategory ? (
+                <p className="mt-1.5 text-sm text-destructive" role="alert">
+                  {errors.institutionCategory.message}
                 </p>
               ) : null}
             </div>
@@ -119,9 +188,9 @@ export default function RegisterPage() {
               type="submit"
               variant="applicant"
               className="h-11 w-full rounded-xl text-base font-semibold shadow-sm"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isRedirecting}
             >
-              {isSubmitting ? 'Creating account…' : 'Create account'}
+              {isSubmitting || isRedirecting ? 'Creating account…' : 'Create account'}
             </Button>
           </form>
 

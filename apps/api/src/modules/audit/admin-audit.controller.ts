@@ -27,7 +27,7 @@ export class AdminAuditController {
     @Query('page') page?: string,
     @Query('take') take?: string,
   ) {
-    const { page: p, take: t } = parsePageTake(page, take, { defaultTake: 50, maxTake: 200 });
+    const { page: p, take: t } = parsePageTake(page, take, { defaultTake: 10, maxTake: 10 });
     return this.auditService.listGlobal(user, p, t);
   }
 

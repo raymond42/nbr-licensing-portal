@@ -1,18 +1,13 @@
-import {
-  ApplicationStatus,
-  PrismaClient,
-  Role,
-} from '@prisma/client';
+import { ApplicationStatus, PrismaClient, Role } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const BCRYPT_COST = 12;
 
-const DEFAULT_PASSWORD = 'NbrDemo_Local_Only!';
+const DEFAULT_PASSWORD = 'password1234';
 
 async function main() {
   const prisma = new PrismaClient();
-  const passwordPlain =
-    process.env.SEED_DEFAULT_PASSWORD?.trim() || DEFAULT_PASSWORD;
+  const passwordPlain = process.env.SEED_DEFAULT_PASSWORD?.trim() || DEFAULT_PASSWORD;
   if (passwordPlain.length < 12) {
     throw new Error('SEED_DEFAULT_PASSWORD must be at least 12 characters when set.');
   }
@@ -20,10 +15,10 @@ async function main() {
 
   try {
     const applicant = await prisma.user.upsert({
-      where: { email: 'applicant@nbr.local' },
+      where: { email: 'applicant@nbr.rw' },
       update: { passwordHash, fullName: 'Demo Applicant', role: Role.APPLICANT, isActive: true },
       create: {
-        email: 'applicant@nbr.local',
+        email: 'applicant@nbr.rw',
         fullName: 'Demo Applicant',
         role: Role.APPLICANT,
         passwordHash,
@@ -31,10 +26,10 @@ async function main() {
     });
 
     await prisma.user.upsert({
-      where: { email: 'reviewer@nbr.local' },
+      where: { email: 'reviewer@nbr.rw' },
       update: { passwordHash, fullName: 'Demo Reviewer', role: Role.REVIEWER, isActive: true },
       create: {
-        email: 'reviewer@nbr.local',
+        email: 'reviewer@nbr.rw',
         fullName: 'Demo Reviewer',
         role: Role.REVIEWER,
         passwordHash,
@@ -42,10 +37,10 @@ async function main() {
     });
 
     await prisma.user.upsert({
-      where: { email: 'approver@nbr.local' },
+      where: { email: 'approver@nbr.rw' },
       update: { passwordHash, fullName: 'Demo Approver', role: Role.APPROVER, isActive: true },
       create: {
-        email: 'approver@nbr.local',
+        email: 'approver@nbr.rw',
         fullName: 'Demo Approver',
         role: Role.APPROVER,
         passwordHash,
@@ -53,10 +48,10 @@ async function main() {
     });
 
     await prisma.user.upsert({
-      where: { email: 'admin@nbr.local' },
+      where: { email: 'admin@nbr.rw' },
       update: { passwordHash, fullName: 'Demo Admin', role: Role.ADMIN, isActive: true },
       create: {
-        email: 'admin@nbr.local',
+        email: 'admin@nbr.rw',
         fullName: 'Demo Admin',
         role: Role.ADMIN,
         passwordHash,
@@ -89,8 +84,10 @@ async function main() {
       });
     }
 
-    console.log('[seed] users: applicant@nbr.local, reviewer@nbr.local, approver@nbr.local, admin@nbr.local');
-    console.log(`[seed] password (default): ${DEFAULT_PASSWORD} — override with SEED_DEFAULT_PASSWORD`);
+    console.log('[seed] users: applicant@nbr.rw, reviewer@nbr.rw, approver@nbr.rw, admin@nbr.rw');
+    console.log(
+      `[seed] password (default): ${DEFAULT_PASSWORD} — override with SEED_DEFAULT_PASSWORD`,
+    );
     console.log('[seed] applications: seeded when none existed for demo applicant');
   } finally {
     await prisma.$disconnect();

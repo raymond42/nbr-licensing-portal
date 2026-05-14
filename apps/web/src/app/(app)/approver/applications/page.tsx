@@ -4,28 +4,27 @@ import { ApplicationStatus } from '@nbr/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { ErrorState } from '@/components/states/error-state';
 import { type Column, DataTable } from '@/components/ui/data-table';
 import { DataTableSkeleton } from '@/components/ui/data-table-skeleton';
-import { TableViewAction } from '@/components/ui/table-view-action';
 import { ListPagination } from '@/components/ui/list-pagination';
-import { EmptyState } from '@/components/states/empty-state';
-import { ErrorState } from '@/components/states/error-state';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { TableViewAction } from '@/components/ui/table-view-action';
 import { APPLICATION_LIST_PAGE_SIZE } from '@/constants/pagination';
-import { formatDateTime } from '@/lib/format';
 import { getApiErrorMessage } from '@/lib/api-client';
+import { formatDateTime } from '@/lib/format';
 import { queryKeys } from '@/lib/query-keys';
 import type { ApplicationDto } from '@nbr/shared';
 import * as applicationsApi from '@/services/applications-api';
 
-export default function ApproverQueuePage() {
+export default function ApproverApplicationsPage() {
   const [page, setPage] = useState(0);
   const take = APPLICATION_LIST_PAGE_SIZE;
 
   const q = useQuery({
-    queryKey: queryKeys.applications(page, take, 'approver-queue'),
-    queryFn: () => applicationsApi.listApplications({ page, take }),
+    queryKey: queryKeys.applications(page, take, 'approver-all'),
+    queryFn: () => applicationsApi.listApplications({ page, take, scope: 'all' }),
   });
 
   if (q.isError) {
@@ -67,18 +66,13 @@ export default function ApproverQueuePage() {
   return (
     <div>
       <PageHeader
-        title="Review queue"
-        subtitle="Applications awaiting final decision."
+        title="All applications"
+        subtitle="All non-draft applications visible to approvers."
       />
       {q.isPending ? (
         <DataTableSkeleton rows={8} columns={5} />
       ) : (
-        <DataTable
-          columns={columns}
-          rows={rows}
-          getRowKey={(r) => r.id}
-          empty={<EmptyState title="No applications awaiting approval" />}
-        />
+        <DataTable columns={columns} rows={rows} getRowKey={(r) => r.id} />
       )}
       {!q.isPending ? (
         <ListPagination className="mt-4" page={page} take={take} total={total} onPageChange={setPage} />

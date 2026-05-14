@@ -18,12 +18,14 @@ import {
 
 interface NavigationLoadingContextValue {
   isNavigating: boolean;
-  startNavigation: () => void;
+  pendingHref: string | null;
+  startNavigation: (href?: string | null) => void;
   stopNavigation: () => void;
 }
 
 const NavigationLoadingContext = createContext<NavigationLoadingContextValue>({
   isNavigating: false,
+  pendingHref: null,
   startNavigation: () => {},
   stopNavigation: () => {},
 });
@@ -35,6 +37,7 @@ export function NavigationLoadingProvider({ children }: { children: ReactNode })
   const previousPathname = useRef(pathname);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   const clearNavigationTimeout = useCallback(() => {
     if (timeoutRef.current) {
@@ -46,13 +49,16 @@ export function NavigationLoadingProvider({ children }: { children: ReactNode })
   const stopNavigation = useCallback(() => {
     clearNavigationTimeout();
     setIsNavigating(false);
+    setPendingHref(null);
   }, [clearNavigationTimeout]);
 
-  const startNavigation = useCallback(() => {
+  const startNavigation = useCallback((href?: string | null) => {
     clearNavigationTimeout();
     setIsNavigating(true);
+    setPendingHref(href ?? null);
     timeoutRef.current = setTimeout(() => {
       setIsNavigating(false);
+      setPendingHref(null);
       timeoutRef.current = null;
     }, NAVIGATION_TIMEOUT_MS);
   }, [clearNavigationTimeout]);
@@ -67,8 +73,8 @@ export function NavigationLoadingProvider({ children }: { children: ReactNode })
   useEffect(() => stopNavigation, [stopNavigation]);
 
   const value = useMemo(
-    () => ({ isNavigating, startNavigation, stopNavigation }),
-    [isNavigating, startNavigation, stopNavigation],
+    () => ({ isNavigating, pendingHref, startNavigation, stopNavigation }),
+    [isNavigating, pendingHref, startNavigation, stopNavigation],
   );
 
   return (
@@ -107,26 +113,30 @@ export const TrackedLink = forwardRef<HTMLAnchorElement, TrackedLinkProps>(funct
       return;
     }
 
-    startNavigation();
+    startNavigation(navigationHrefFor(href));
   }
 
   return <Link ref={ref} href={href} target={target} onClick={handleClick} {...props} />;
 });
 
-function shouldTrackHref(href: TrackedLinkProps['href']): boolean {
+function navigationHrefFor(href: TrackedLinkProps['href']): string | null {
   const rawHref = typeof href === 'string' ? href : href.pathname ?? '';
-  if (!rawHref || rawHref.startsWith('#')) return false;
+  if (!rawHref || rawHref.startsWith('#')) return null;
 
   try {
     const targetUrl = new URL(rawHref, window.location.href);
-    if (targetUrl.origin !== window.location.origin) return false;
+    if (targetUrl.origin !== window.location.origin) return null;
 
     const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     const next = `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`;
-    return current !== next;
+    return current !== next ? next : null;
   } catch {
-    return true;
+    return rawHref;
   }
+}
+
+function shouldTrackHref(href: TrackedLinkProps['href']): boolean {
+  return navigationHrefFor(href) !== null;
 }
 
 function NavigationProgress() {

@@ -1,6 +1,6 @@
 'use client';
 
-import { ApplicationStatus, DocumentType } from '@nbr/shared';
+import { ApplicationStatus } from '@nbr/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Download, Send } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -10,18 +10,18 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CardContentSkeleton } from '@/components/ui/data-table-skeleton';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { DOCUMENT_TYPE_OPTIONS } from '@/constants/document-types';
 import { ApplicationStepper } from '@/features/applications/application-stepper';
 import { ApplicationTimeline } from '@/features/applications/application-timeline';
+import {
+  DocumentUploadQueue,
+  type DocumentUploadItem,
+} from '@/features/applications/document-upload-queue';
 import { DocumentVersionGroups } from '@/features/applications/document-version-groups';
-import { FileUpload } from '@/features/applications/file-upload';
 import { useApplicationDataBundle } from '@/features/applications/hooks/use-application-data';
 import { inferRecommendRejectFromAudit } from '@/lib/workflow-actors';
 import { formatDateTime } from '@/lib/format';
@@ -30,8 +30,8 @@ import { queryKeys } from '@/lib/query-keys';
 import { isTerminalStatus } from '@/lib/workflow-ui';
 import { TrackedLink } from '@/providers/navigation-loading-provider';
 import * as applicationsApi from '@/services/applications-api';
-import { assertFileSize, downloadDocumentFile, uploadDocument } from '@/services/documents-api';
-import { useEffect, useMemo, useState } from 'react';
+import { downloadDocumentFile, uploadDocument } from '@/services/documents-api';
+import { useEffect, useMemo } from 'react';
 
 const descSchema = z.object({
   description: z.string().min(10).max(20000),
@@ -41,9 +41,6 @@ type DescForm = z.infer<typeof descSchema>;
 
 export function ApplicantApplicationDetail({ id }: { id: string }) {
   const qc = useQueryClient();
-  const [docType, setDocType] = useState(DocumentType.BUSINESS_PLAN);
-  const [logicalKey, setLogicalKey] = useState('BusinessPlan');
-  const [uploadPct, setUploadPct] = useState<number | null>(null);
 
   const { appQ, docsQ, auditQ } = useApplicationDataBundle(id);
 
@@ -94,28 +91,22 @@ export function ApplicantApplicationDetail({ id }: { id: string }) {
     onError: (e) => toast.error(getApiErrorMessage(e)),
   });
 
-  async function onUpload(file: File) {
+  async function onUploadDocument(item: DocumentUploadItem, onProgress: (pct: number) => void) {
     if (!app) return;
-    try {
-      assertFileSize(file);
-      setUploadPct(0);
-      await uploadDocument({
-        applicationId: id,
-        file,
-        type: docType,
-        logicalKey,
-        expectedVersion: app.version,
-        onProgress: setUploadPct,
-      });
-      setUploadPct(null);
-      await qc.invalidateQueries({ queryKey: queryKeys.application(id) });
-      await qc.invalidateQueries({ queryKey: queryKeys.applicationDocuments(id) });
-      await qc.invalidateQueries({ queryKey: queryKeys.auditApplication(id) });
-      toast.success('Uploaded');
-    } catch (e) {
-      setUploadPct(null);
-      toast.error(getApiErrorMessage(e));
-    }
+    await uploadDocument({
+      applicationId: id,
+      file: item.file,
+      type: item.type,
+      logicalKey: item.logicalKey,
+      expectedVersion: app.version,
+      onProgress,
+    });
+  }
+
+  async function onDocumentsUploaded() {
+    await qc.invalidateQueries({ queryKey: queryKeys.application(id) });
+    await qc.invalidateQueries({ queryKey: queryKeys.applicationDocuments(id) });
+    await qc.invalidateQueries({ queryKey: queryKeys.auditApplication(id) });
   }
 
   async function onDownload(documentId: string) {
@@ -228,37 +219,14 @@ export function ApplicantApplicationDetail({ id }: { id: string }) {
             </CardHeader>
             <CardContent className="space-y-4">
               {canUpload ? (
-                <div className="flex flex-wrap gap-3 border-b border-gray-100 pb-4">
-                  <div>
-                    <Label htmlFor="dt">Type</Label>
-                    <select
-                      id="dt"
-                      className="mt-1 block rounded-md border border-gray-300 px-3 py-2 text-sm"
-                      value={docType}
-                      onChange={(e) => setDocType(e.target.value as DocumentType)}
-                    >
-                      {DOCUMENT_TYPE_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="min-w-[160px]">
-                    <Label htmlFor="lk">Slot</Label>
-                    <Input
-                      id="lk"
-                      className="mt-1"
-                      value={logicalKey}
-                      onChange={(e) => setLogicalKey(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <FileUpload id="app-doc" onFileSelected={(f) => void onUpload(f)} />
-                  </div>
+                <div className="border-b border-gray-100 pb-4">
+                  <DocumentUploadQueue
+                    id="app-doc"
+                    onUpload={onUploadDocument}
+                    onUploaded={onDocumentsUploaded}
+                  />
                 </div>
               ) : null}
-              {uploadPct !== null ? <p className="text-sm text-gray-600">Uploading… {uploadPct}%</p> : null}
               {docsQ.isPending ? (
                 <CardContentSkeleton lines={3} />
               ) : (

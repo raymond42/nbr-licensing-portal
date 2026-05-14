@@ -4,7 +4,7 @@ import { apiClient } from '@/lib/api-client';
 
 export async function listUsers(params?: { page?: number; take?: number }): Promise<PaginatedDto<UserDto>> {
   const page = params?.page ?? 0;
-  const take = params?.take ?? 20;
+  const take = params?.take ?? 10;
   const { data } = await apiClient.get<PaginatedDto<UserDto>>('/users', { params: { page, take } });
   return data;
 }

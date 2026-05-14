@@ -6,7 +6,10 @@ import { RoleGuard } from '@/features/auth/role-guard';
 import { ProtectedShell } from '@/features/auth/protected-shell';
 import { AppShell, type NavItem } from '@/features/layout/app-shell';
 
-const nav: NavItem[] = [{ href: '/approver/queue', label: 'Review queue', icon: 'approver-queue' }];
+const nav: NavItem[] = [
+  { href: '/approver/queue', label: 'Review queue', icon: 'approver-queue' },
+  { href: '/approver/applications', label: 'All applications', icon: 'admin-applications' },
+];
 
 export default function ApproverLayout({ children }: { children: ReactNode }) {
   return (

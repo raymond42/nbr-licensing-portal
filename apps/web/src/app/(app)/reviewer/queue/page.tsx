@@ -24,7 +24,7 @@ export default function ReviewerQueuePage() {
   const take = APPLICATION_LIST_PAGE_SIZE;
 
   const q = useQuery({
-    queryKey: queryKeys.applications(page, take),
+    queryKey: queryKeys.applications(page, take, 'reviewer-queue'),
     queryFn: () => applicationsApi.listApplications({ page, take }),
   });
 

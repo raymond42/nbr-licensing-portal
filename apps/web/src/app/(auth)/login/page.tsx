@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Role } from '@nbr/shared';
 import { ShieldCheck } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -11,7 +12,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { homePathForRole } from '@/constants/routes';
+import { homePathForRole, isPathAllowedForRole } from '@/constants/routes';
 import { getApiErrorMessage } from '@/lib/api-client';
 import { TrackedLink, useNavigationLoading } from '@/providers/navigation-loading-provider';
 import { useAuth } from '@/hooks/use-auth';
@@ -31,6 +32,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { startNavigation, stopNavigation } = useNavigationLoading();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const {
     register,
@@ -38,17 +40,34 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
+  function getValidNextPath(role: Role): string | null {
+    const next = searchParams.get('next');
+    if (!next) return null;
+
+    try {
+      const decoded = decodeURIComponent(next);
+      if (!decoded.startsWith('/') || decoded.startsWith('//')) return null;
+      return isPathAllowedForRole(decoded, role) ? decoded : null;
+    } catch {
+      return null;
+    }
+  }
+
   async function onSubmit(values: FormValues) {
     try {
       const signedIn = await login({ email: values.email.trim(), password: values.password });
-      const next = searchParams.get('next');
-      startNavigation();
+      const role = signedIn.role as Role;
+      const next = getValidNextPath(role);
+      const target = next ?? homePathForRole(role);
+      setIsRedirecting(true);
+      startNavigation(target);
       if (next) {
-        router.replace(decodeURIComponent(next));
+        router.replace(next);
         return;
       }
-      router.replace(homePathForRole(signedIn.role as Role));
+      router.replace(homePathForRole(role));
     } catch (e) {
+      setIsRedirecting(false);
       stopNavigation();
       toast.error(getApiErrorMessage(e, 'Sign-in failed'));
     }
@@ -116,9 +135,9 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="h-11 w-full rounded-xl text-base font-semibold shadow-sm"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isRedirecting}
             >
-              {isSubmitting ? 'Signing in…' : 'Sign in'}
+              {isSubmitting || isRedirecting ? 'Signing in…' : 'Sign in'}
             </Button>
           </form>
 

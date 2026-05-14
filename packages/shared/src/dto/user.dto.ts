@@ -4,6 +4,8 @@ export interface UserDto {
   id: string;
   email: string;
   fullName: string;
+  institutionName?: string | null;
+  institutionCategory?: string | null;
   role: Role;
   isActive: boolean;
   createdAt: string;

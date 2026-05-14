@@ -21,3 +21,28 @@ export function homePathForRole(role: Role): string {
       return '/login';
   }
 }
+
+export function appPathPrefixForRole(role: Role): (typeof APP_SHELL_PATH_PREFIXES)[number] | null {
+  switch (role) {
+    case Role.APPLICANT:
+      return '/applicant';
+    case Role.REVIEWER:
+      return '/reviewer';
+    case Role.APPROVER:
+      return '/approver';
+    case Role.ADMIN:
+      return '/admin';
+    default:
+      return null;
+  }
+}
+
+export function isPathAllowedForRole(pathname: string, role: Role): boolean {
+  const prefix = appPathPrefixForRole(role);
+  return !!prefix && (pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
+export function settingsPathForRole(role: Role): string {
+  const prefix = appPathPrefixForRole(role);
+  return prefix ? `${prefix}/settings` : '/login';
+}

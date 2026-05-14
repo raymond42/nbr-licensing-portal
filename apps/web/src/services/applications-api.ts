@@ -15,11 +15,12 @@ export type VersionedNoteBody = { expectedVersion: number; note?: string };
 export async function listApplications(params?: {
   page?: number;
   take?: number;
+  scope?: 'all';
 }): Promise<PaginatedDto<ApplicationDto>> {
   const page = params?.page ?? 0;
-  const take = params?.take ?? 20;
+  const take = params?.take ?? 10;
   const { data } = await apiClient.get<PaginatedDto<ApplicationDto>>('/applications', {
-    params: { page, take },
+    params: { page, take, scope: params?.scope },
   });
   return data;
 }

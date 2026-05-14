@@ -3,6 +3,7 @@
 import { rem, Stepper } from '@mantine/core';
 
 import {
+  isTerminalStatus,
   mapStatusToRegulatorStep,
   REGULATOR_STEP_LABELS,
 } from '@/lib/workflow-ui';
@@ -16,12 +17,13 @@ export function ApplicationStepper({
   accent?: 'applicant' | 'regulator';
 }) {
   const { step: activeIndex, sublabel } = mapStatusToRegulatorStep(status);
-  const color = accent === 'applicant' ? 'orange' : 'yellow';
+  const active = isTerminalStatus(status) ? REGULATOR_STEP_LABELS.length : activeIndex;
+  const color = accent === 'applicant' ? 'hsl(var(--applicant-primary))' : 'hsl(var(--brand))';
 
   return (
     <div className="w-full min-w-0">
       <Stepper
-        active={activeIndex}
+        active={active}
         color={color}
         iconSize={28}
         orientation="horizontal"
@@ -37,7 +39,7 @@ export function ApplicationStepper({
         {REGULATOR_STEP_LABELS.map((label, i) => (
           <Stepper.Step
             key={label}
-            description={i === activeIndex && sublabel ? sublabel : undefined}
+            description={i === activeIndex && active === activeIndex && sublabel ? sublabel : undefined}
             label={label}
           />
         ))}

@@ -87,7 +87,7 @@ export class ApplicationsService {
     return this.toResponse(application);
   }
 
-  async list(viewer: RequestUser, page: number, take: number) {
+  async list(viewer: RequestUser, page: number, take: number, scope?: string) {
     const skip = page * take;
     let where: Prisma.ApplicationWhereInput = {};
     if (viewer.role === SharedRole.APPLICANT) {
@@ -95,7 +95,10 @@ export class ApplicationsService {
     } else if (viewer.role === SharedRole.ADMIN) {
       where = { NOT: { status: ApplicationStatus.DRAFT } };
     } else if (viewer.role === SharedRole.APPROVER) {
-      where = { status: ApplicationStatus.REVIEW_COMPLETED };
+      where =
+        scope === 'all'
+          ? { NOT: { status: ApplicationStatus.DRAFT } }
+          : { status: ApplicationStatus.REVIEW_COMPLETED };
     } else {
       where = { NOT: { status: ApplicationStatus.DRAFT } };
     }

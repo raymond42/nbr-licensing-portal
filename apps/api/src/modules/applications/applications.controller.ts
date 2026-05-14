@@ -83,9 +83,10 @@ export class ApplicationsController {
     @CurrentUser() user: RequestUser,
     @Query('page') page?: string,
     @Query('take') take?: string,
+    @Query('scope') scope?: string,
   ) {
-    const { page: p, take: t } = parsePageTake(page, take);
-    return this.applicationsService.list(user, p, t);
+    const { page: p, take: t } = parsePageTake(page, take, { defaultTake: 10, maxTake: 10 });
+    return this.applicationsService.list(user, p, t, scope);
   }
 
   @Get(':id/documents')

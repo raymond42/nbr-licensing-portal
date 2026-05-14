@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSessionActive(false);
     startNavigation();
-    router.push('/login');
+    router.replace('/login');
   }, [router, startNavigation]);
 
   const refreshProfile = useCallback(async () => {

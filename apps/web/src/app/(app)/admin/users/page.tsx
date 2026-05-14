@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Role } from '@nbr/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { UserCheck, UserX } from 'lucide-react';
+import { Eye, UserCheck, UserX } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/page-header';
 import { RoleBadge } from '@/components/ui/role-badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { USER_LIST_PAGE_SIZE } from '@/constants/pagination';
 import { formatDateTime } from '@/lib/format';
 import { getApiErrorMessage } from '@/lib/api-client';
@@ -43,12 +44,22 @@ const roleOptions = [
   Role.ADMIN,
 ] as const;
 
+function DetailRow({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div className="rounded-lg border border-border bg-muted/20 px-3 py-2">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-1 break-words text-sm font-medium text-foreground">{value || 'Not available'}</p>
+    </div>
+  );
+}
+
 export default function AdminUsersPage() {
   const qc = useQueryClient();
   const [page, setPage] = useState(0);
   const take = USER_LIST_PAGE_SIZE;
   const [createOpen, setCreateOpen] = useState(false);
   const [disableTarget, setDisableTarget] = useState<UserDto | null>(null);
+  const [detailsTarget, setDetailsTarget] = useState<UserDto | null>(null);
 
   const q = useQuery({
     queryKey: queryKeys.users(page, take),
@@ -64,6 +75,7 @@ export default function AdminUsersPage() {
       password: '',
     },
   });
+  const selectedCreateRole = createForm.watch('role');
 
   const createMut = useMutation({
     mutationFn: usersApi.createUser,
@@ -144,23 +156,31 @@ export default function AdminUsersPage() {
     {
       key: 'actions',
       header: <span className="sr-only">Account actions</span>,
-      className: 'w-14 text-center',
-      cell: (r) =>
-        r.isActive ? (
+      className: 'w-24 text-center',
+      cell: (r) => (
+        <div className="flex items-center justify-center gap-1">
           <IconTableAction
-            label="Disable user"
-            icon={UserX}
-            onClick={() => setDisableTarget(r)}
-            className="hover:text-destructive"
+            label="View user details"
+            icon={Eye}
+            onClick={() => setDetailsTarget(r)}
           />
-        ) : (
-          <IconTableAction
-            label="Enable user"
-            icon={UserCheck}
-            disabled={enableMut.isPending}
-            onClick={() => void enableMut.mutate(r.id)}
-            className="hover:text-emerald-400"
-          />
+          {r.isActive ? (
+            <IconTableAction
+              label="Disable user"
+              icon={UserX}
+              onClick={() => setDisableTarget(r)}
+              className="hover:text-destructive"
+            />
+          ) : (
+            <IconTableAction
+              label="Enable user"
+              icon={UserCheck}
+              disabled={enableMut.isPending}
+              onClick={() => void enableMut.mutate(r.id)}
+              className="hover:text-emerald-400"
+            />
+          )}
+        </div>
         ),
     },
   ];
@@ -210,17 +230,26 @@ export default function AdminUsersPage() {
             </div>
             <div>
               <Label htmlFor="cu-role">Role</Label>
-              <select
-                id="cu-role"
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                {...createForm.register('role')}
+              <Select
+                value={selectedCreateRole}
+                onValueChange={(value) =>
+                  createForm.setValue('role', value as Role, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
               >
-                {roleOptions.map((role) => (
-                  <option key={role} value={role}>
-                    {role}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="cu-role" className="mt-1">
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roleOptions.map((role) => (
+                    <SelectItem key={role} value={role}>
+                      {role}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="cu-pass">Initial password</Label>
@@ -241,6 +270,39 @@ export default function AdminUsersPage() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!detailsTarget} onOpenChange={(o) => !o && setDetailsTarget(null)}>
+        <DialogContent
+          title="User details"
+          description="Read-only account and institution details."
+        >
+          {detailsTarget ? (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-base font-semibold text-foreground">{detailsTarget.fullName}</p>
+                  <p className="truncate text-sm text-muted-foreground">{detailsTarget.email}</p>
+                </div>
+                <RoleBadge role={detailsTarget.role as Role} />
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <DetailRow label="Full name" value={detailsTarget.fullName} />
+                <DetailRow label="Email" value={detailsTarget.email} />
+                {detailsTarget.role === Role.APPLICANT ? (
+                  <>
+                    <DetailRow label="Institution / bank name" value={detailsTarget.institutionName} />
+                    <DetailRow label="Institution category" value={detailsTarget.institutionCategory} />
+                  </>
+                ) : null}
+                <DetailRow label="Role" value={detailsTarget.role} />
+                <DetailRow label="Status" value={detailsTarget.isActive ? 'Active' : 'Inactive'} />
+                <DetailRow label="Created" value={formatDateTime(detailsTarget.createdAt)} />
+                <DetailRow label="Updated" value={formatDateTime(detailsTarget.updatedAt)} />
+              </div>
+            </div>
+          ) : null}
         </DialogContent>
       </Dialog>
 

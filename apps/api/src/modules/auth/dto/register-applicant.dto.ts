@@ -8,6 +8,18 @@ export class RegisterApplicantDto {
   @MaxLength(256)
   fullName!: string;
 
+  @ApiProperty({ example: 'Kigali Community Microfinance' })
+  @IsString()
+  @MinLength(2)
+  @MaxLength(256)
+  institutionName!: string;
+
+  @ApiProperty({ example: 'Microfinance' })
+  @IsString()
+  @MinLength(2)
+  @MaxLength(128)
+  institutionCategory!: string;
+
   @ApiProperty({ example: 'new.applicant@example.com' })
   @IsEmail()
   email!: string;

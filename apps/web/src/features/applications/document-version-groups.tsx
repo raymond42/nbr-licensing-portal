@@ -4,6 +4,7 @@ import { Download } from 'lucide-react';
 
 import { EmptyState } from '@/components/states/empty-state';
 import { Button } from '@/components/ui/button';
+import { documentTypeLabel } from '@/constants/document-types';
 import { formatBytes, formatDateTime } from '@/lib/format';
 import { groupDocumentsByLogicalKey } from '@/lib/document-groups';
 import type { ApplicationDocumentDto } from '@nbr/shared';
@@ -33,7 +34,9 @@ export function DocumentVersionGroups({
           className="rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-3 shadow-sm"
         >
           <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-gray-100/80 pb-2">
-            <span className="text-sm font-semibold text-gray-900">{g.logicalKey}</span>
+            <span className="text-sm font-semibold text-gray-900">
+              {documentTypeLabel(g.versions[0]!.type)}
+            </span>
             <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
               {g.versions.length} version{g.versions.length === 1 ? '' : 's'}
             </span>

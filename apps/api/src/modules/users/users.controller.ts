@@ -34,7 +34,7 @@ export class UsersController {
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'List all users (admin only, paginated)' })
   list(@Query('page') page?: string, @Query('take') take?: string) {
-    const { page: p, take: t } = parsePageTake(page, take);
+    const { page: p, take: t } = parsePageTake(page, take, { defaultTake: 10, maxTake: 10 });
     return this.usersService.listAll(p, t);
   }
 

@@ -23,7 +23,7 @@ export default function AdminApplicationsPage() {
   const take = APPLICATION_LIST_PAGE_SIZE;
 
   const q = useQuery({
-    queryKey: queryKeys.applications(page, take),
+    queryKey: queryKeys.applications(page, take, 'admin-all'),
     queryFn: () => applicationsApi.listApplications({ page, take }),
   });
 
