@@ -1,9 +1,9 @@
 'use client';
 
 import type { LucideIcon } from 'lucide-react';
-import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
+import { TrackedLink } from '@/providers/navigation-loading-provider';
 import { cn } from '@/lib/utils';
 
 export function IconTableAction({
@@ -27,9 +27,9 @@ export function IconTableAction({
     return (
       <div className="flex justify-center">
         <Button asChild variant="ghost" size="icon" className={btnClass}>
-          <Link href={href} title={label} aria-label={label}>
+          <TrackedLink href={href} title={label} aria-label={label}>
             <Icon className="h-4 w-4" aria-hidden />
-          </Link>
+          </TrackedLink>
         </Button>
       </div>
     );

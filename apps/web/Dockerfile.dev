@@ -1,0 +1,16 @@
+# syntax=docker/dockerfile:1.7
+ARG NODE_VERSION=20-alpine
+
+FROM node:${NODE_VERSION}
+WORKDIR /workspace
+
+RUN corepack enable
+
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY apps/web/package.json apps/web/
+COPY packages/shared/package.json packages/shared/
+
+RUN pnpm install --frozen-lockfile
+
+EXPOSE 3000
+CMD ["pnpm", "--filter", "@nbr/web", "exec", "next", "dev", "-p", "3000", "-H", "0.0.0.0"]

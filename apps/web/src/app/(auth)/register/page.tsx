@@ -1,7 +1,6 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -12,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getApiErrorMessage } from '@/lib/api-client';
+import { TrackedLink, useNavigationLoading } from '@/providers/navigation-loading-provider';
 import { register as registerApplicant } from '@/services/auth-api';
 
 const schema = z.object({
@@ -30,6 +30,7 @@ const inputClassName =
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { startNavigation, stopNavigation } = useNavigationLoading();
   const [formError, setFormError] = useState<string | null>(null);
 
   const {
@@ -47,8 +48,10 @@ export default function RegisterPage() {
         password: values.password,
       });
       toast.success('Request received. You will be notified once provisioned.');
+      startNavigation();
       router.replace('/login');
     } catch (e) {
+      stopNavigation();
       setFormError(getApiErrorMessage(e, 'Registration failed'));
     }
   }
@@ -124,16 +127,16 @@ export default function RegisterPage() {
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Already have an account?{' '}
-            <Link href="/login" className="font-medium text-primary hover:underline">
+            <TrackedLink href="/login" className="font-medium text-primary hover:underline">
               Sign in
-            </Link>
+            </TrackedLink>
           </p>
         </div>
 
         <p className="mt-8 text-center text-xs text-muted-foreground">
-          <Link href="/" className="hover:text-foreground hover:underline">
+          <TrackedLink href="/" className="hover:text-foreground hover:underline">
             Back to home
-          </Link>
+          </TrackedLink>
         </p>
       </div>
     </main>

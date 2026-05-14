@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { DocumentType } from '@nbr/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Send } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -24,6 +23,7 @@ import * as applicationsApi from '@/services/applications-api';
 import { assertFileSize, listDocuments, uploadDocument } from '@/services/documents-api';
 import { FileUpload } from '@/features/applications/file-upload';
 import { WizardVertical, type WizardStepDef } from '@/features/applications/wizard-vertical';
+import { TrackedLink, useNavigationLoading } from '@/providers/navigation-loading-provider';
 import { useAuth } from '@/hooks/use-auth';
 
 const steps: WizardStepDef[] = [
@@ -47,6 +47,7 @@ type Step1 = z.infer<typeof step1Schema>;
 
 export function NewApplicationWizard() {
   const router = useRouter();
+  const { startNavigation } = useNavigationLoading();
   const qc = useQueryClient();
   const { user: authUser } = useAuth();
   const [step, setStep] = useState(0);
@@ -100,6 +101,7 @@ export function NewApplicationWizard() {
       qc.setQueryData(queryKeys.application(data.id), data);
       await qc.invalidateQueries({ queryKey: ['applications'] });
       toast.success('Application submitted');
+      startNavigation();
       router.push('/applicant/applications');
     },
     onError: (e) => toast.error(getApiErrorMessage(e)),
@@ -156,12 +158,12 @@ export function NewApplicationWizard() {
 
   return (
     <div>
-      <Link
+      <TrackedLink
         href="/applicant/applications"
         className="text-sm font-medium text-applicant hover:underline"
       >
         ← Back to applications
-      </Link>
+      </TrackedLink>
       <h1 className="mt-4 text-2xl font-semibold text-gray-900">New licensing application</h1>
       <p className="mt-1 text-sm text-gray-600">
         Walk through each step. You can save as a draft at any time and continue later.

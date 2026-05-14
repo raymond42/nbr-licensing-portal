@@ -13,6 +13,7 @@ import {
 } from 'react';
 
 import { clearSession, getAccessToken, getStoredUser, setSession } from '@/shared/utils/auth-storage';
+import { useNavigationLoading } from '@/providers/navigation-loading-provider';
 import * as authApi from '@/services/auth-api';
 
 interface AuthContextValue {
@@ -28,6 +29,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const { startNavigation } = useNavigationLoading();
   const [user, setUser] = useState<AuthenticatedUserDto | null>(null);
   const [sessionActive, setSessionActive] = useState(false);
   const [ready, setReady] = useState(false);
@@ -58,8 +60,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearSession();
     setUser(null);
     setSessionActive(false);
+    startNavigation();
     router.push('/login');
-  }, [router]);
+  }, [router, startNavigation]);
 
   const refreshProfile = useCallback(async () => {
     const token = getAccessToken();

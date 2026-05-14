@@ -2,24 +2,26 @@
 
 import { Role } from '@nbr/shared';
 import { FileText, ShieldCheck, Users, Zap } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { homePathForRole } from '@/constants/routes';
 import { FullPageLoader } from '@/components/ui/loading-spinner';
+import { TrackedLink, useNavigationLoading } from '@/providers/navigation-loading-provider';
 import { useAuth } from '@/hooks/use-auth';
 
 export default function HomePage() {
   const { ready, isAuthenticated, user } = useAuth();
   const router = useRouter();
+  const { startNavigation } = useNavigationLoading();
 
   useEffect(() => {
     if (!ready) return;
     if (isAuthenticated && user) {
+      startNavigation();
       router.replace(homePathForRole(user.role as Role));
     }
-  }, [ready, isAuthenticated, user, router]);
+  }, [ready, isAuthenticated, user, router, startNavigation]);
 
   if (!ready) {
     return <FullPageLoader />;
@@ -41,23 +43,23 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link
+            <TrackedLink
               href="/login"
               className="text-sm font-medium text-muted-foreground hover:text-foreground"
             >
               Sign in
-            </Link>
-            <Link
+            </TrackedLink>
+            <TrackedLink
               href="/applicant/applications/new"
               className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               Apply for a license
-            </Link>
+            </TrackedLink>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto h-[90%] flex w-full items-center justify-center flex-col  items-center px-4 text-center gap-6">
+      <main className="mx-auto h-[90%] flex w-full items-center justify-center flex-col  items-center px-4 text-center gap-8">
         <div className="max-w-3xl flex flex-col gap-4">
           <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl md:text-5xl">
             Bank Licensing &amp; Compliance Portal
@@ -69,18 +71,18 @@ export default function HomePage() {
           </p>
 
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
+            <TrackedLink
               href="/applicant/applications/new"
               className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               Start an application
-            </Link>
-            <Link
+            </TrackedLink>
+            <TrackedLink
               href="/login"
               className="inline-flex items-center justify-center rounded-lg border border-border bg-secondary px-6 py-2.5 text-sm font-medium text-secondary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             >
               Staff sign in
-            </Link>
+            </TrackedLink>
           </div>
         </div>
 

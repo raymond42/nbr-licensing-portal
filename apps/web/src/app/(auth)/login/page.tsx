@@ -3,10 +3,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Role } from '@nbr/shared';
 import { ShieldCheck } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { homePathForRole } from '@/constants/routes';
 import { getApiErrorMessage } from '@/lib/api-client';
+import { TrackedLink, useNavigationLoading } from '@/providers/navigation-loading-provider';
 import { useAuth } from '@/hooks/use-auth';
 
 const schema = z.object({
@@ -30,7 +30,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [formError, setFormError] = useState<string | null>(null);
+  const { startNavigation, stopNavigation } = useNavigationLoading();
 
   const {
     register,
@@ -39,17 +39,18 @@ export default function LoginPage() {
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
   async function onSubmit(values: FormValues) {
-    setFormError(null);
     try {
       const signedIn = await login({ email: values.email.trim(), password: values.password });
       const next = searchParams.get('next');
+      startNavigation();
       if (next) {
         router.replace(decodeURIComponent(next));
         return;
       }
       router.replace(homePathForRole(signedIn.role as Role));
     } catch (e) {
-      setFormError(getApiErrorMessage(e, 'Sign-in failed'));
+      stopNavigation();
+      toast.error(getApiErrorMessage(e, 'Sign-in failed'));
     }
   }
 
@@ -112,11 +113,6 @@ export default function LoginPage() {
                 </p>
               ) : null}
             </div>
-            {formError ? (
-              <p className="text-sm text-destructive" role="alert">
-                {formError}
-              </p>
-            ) : null}
             <Button
               type="submit"
               className="h-11 w-full rounded-xl text-base font-semibold shadow-sm"
@@ -128,16 +124,16 @@ export default function LoginPage() {
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             New applicant?{' '}
-            <Link href="/register" className="font-medium text-primary hover:underline">
+            <TrackedLink href="/register" className="font-medium text-primary hover:underline">
               Create an account
-            </Link>
+            </TrackedLink>
           </p>
         </div>
 
         <p className="mt-8 text-center text-xs text-muted-foreground">
-          <Link href="/" className="hover:text-foreground hover:underline">
+          <TrackedLink href="/" className="hover:text-foreground hover:underline">
             Back to home
-          </Link>
+          </TrackedLink>
         </p>
       </div>
     </main>

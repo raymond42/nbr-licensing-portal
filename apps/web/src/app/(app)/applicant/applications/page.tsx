@@ -2,7 +2,6 @@
 
 import { ApplicationStatus } from '@nbr/shared';
 import { useQuery } from '@tanstack/react-query';
-import Link from 'next/link';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -18,6 +17,7 @@ import { APPLICATION_LIST_PAGE_SIZE } from '@/constants/pagination';
 import { formatDateTime } from '@/lib/format';
 import { getApiErrorMessage } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
+import { TrackedLink } from '@/providers/navigation-loading-provider';
 import type { ApplicationDto } from '@nbr/shared';
 import * as applicationsApi from '@/services/applications-api';
 
@@ -72,11 +72,11 @@ export default function ApplicantApplicationsPage() {
         title="My applications"
         subtitle="Draft and submitted licensing applications for your institution."
         actions={
-          <Link href="/applicant/applications/new">
+          <TrackedLink href="/applicant/applications/new">
             <Button type="button" variant="applicant">
               New application
             </Button>
-          </Link>
+          </TrackedLink>
         }
       />
       {q.isPending ? (
@@ -91,11 +91,11 @@ export default function ApplicantApplicationsPage() {
             title="No applications yet"
             description="Create a new licensing application to get started."
             action={
-              <Link href="/applicant/applications/new">
+              <TrackedLink href="/applicant/applications/new">
                 <Button type="button" variant="applicant">
                   New application
                 </Button>
-              </Link>
+              </TrackedLink>
             }
           />
         }

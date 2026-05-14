@@ -3,7 +3,6 @@
 import { ApplicationStatus, DocumentType } from '@nbr/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Download, Send } from 'lucide-react';
-import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -29,6 +28,7 @@ import { formatDateTime } from '@/lib/format';
 import { getApiErrorMessage } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
 import { isTerminalStatus } from '@/lib/workflow-ui';
+import { TrackedLink } from '@/providers/navigation-loading-provider';
 import * as applicationsApi from '@/services/applications-api';
 import { assertFileSize, downloadDocumentFile, uploadDocument } from '@/services/documents-api';
 import { useEffect, useMemo, useState } from 'react';
@@ -163,9 +163,9 @@ export function ApplicantApplicationDetail({ id }: { id: string }) {
 
   return (
     <div>
-      <Link href="/applicant/applications" className="text-sm font-medium text-applicant hover:underline">
+      <TrackedLink href="/applicant/applications" className="text-sm font-medium text-applicant hover:underline">
         ← All applications
-      </Link>
+      </TrackedLink>
       <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <PageHeader title={app.institutionName} subtitle={app.licenseCategory} />
         <StatusBadge

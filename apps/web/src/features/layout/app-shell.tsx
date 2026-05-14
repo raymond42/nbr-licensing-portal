@@ -14,7 +14,6 @@ import {
   Users,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
@@ -26,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { RoleBadge } from '@/components/ui/role-badge';
+import { TrackedLink } from '@/providers/navigation-loading-provider';
 import { initialsFromFullName } from '@/lib/user-display';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
@@ -176,7 +176,7 @@ export function AppShell({
                 const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
                 const NavIcon = NAV_ICONS[item.icon];
                 return (
-                  <Link
+                  <TrackedLink
                     key={item.href}
                     href={item.href}
                     className={cn(
@@ -188,7 +188,7 @@ export function AppShell({
                   >
                     <NavIcon className="h-4 w-4 shrink-0 opacity-90" aria-hidden />
                     <span className="whitespace-nowrap">{item.label}</span>
-                  </Link>
+                  </TrackedLink>
                 );
               })}
             </div>

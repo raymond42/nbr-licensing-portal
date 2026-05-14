@@ -8,10 +8,10 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   transpilePackages: ['@nbr/shared'],
-  webpack: (config, { dev, isServer }) => {
+  webpack: (config, { dev }) => {
     // Locator: instrument only our app + workspace shared sources (not all of node_modules).
     // See apps/web/src/README.md — Next 14 + SWC can omit JSX source metadata without babel.config.
-    if (dev && !isServer) {
+    if (dev) {
       config.module.rules.push({
         test: /\.(tsx|ts|jsx|js)$/,
         include: [
@@ -22,7 +22,7 @@ const nextConfig = {
         enforce: 'pre',
         use: [
           {
-            loader: '@locator/webpack-loader',
+            loader: path.join(__dirname, 'locator-webpack-loader.cjs'),
             options: { env: 'development' },
           },
         ],

@@ -4,7 +4,6 @@ import { ApplicationStatus, Role } from '@nbr/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import Link from 'next/link';
 
 import { CardContentSkeleton } from '@/components/ui/data-table-skeleton';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -29,6 +28,7 @@ import {
   inferRecommendRejectFromAudit,
 } from '@/lib/workflow-actors';
 import { isTerminalStatus } from '@/lib/workflow-ui';
+import { TrackedLink } from '@/providers/navigation-loading-provider';
 import * as applicationsApi from '@/services/applications-api';
 import { downloadDocumentFile } from '@/services/documents-api';
 import { useAuth } from '@/hooks/use-auth';
@@ -226,9 +226,9 @@ export function RegulatorApplicationDetail({
 
   return (
     <div>
-      <Link href={backHref} className="text-sm font-medium text-brand hover:underline">
+      <TrackedLink href={backHref} className="text-sm font-medium text-brand hover:underline">
         {backLabel}
-      </Link>
+      </TrackedLink>
       <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <PageHeader title={app.institutionName} subtitle={app.licenseCategory} />
         <StatusBadge

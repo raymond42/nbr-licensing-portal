@@ -36,7 +36,6 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@locator/runtime": "^0.5.1",
     "@locator/webpack-loader": "^0.5.1",
     "@types/node": "^20.14.0",
     "@types/react": "^18.3.11",
