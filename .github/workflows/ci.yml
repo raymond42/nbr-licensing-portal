@@ -9,10 +9,15 @@ on:
 env:
   NODE_VERSION: '20'
   PNPM_VERSION: '9'
+  DATABASE_URL: postgresql://nbr:nbr@localhost:5432/nbr_licensing?schema=public
+  JWT_SECRET: ci-only-secret-value
+  FRONTEND_URL: http://localhost:3000
+  CORS_ORIGIN: http://localhost:3000
+  NEXT_PUBLIC_API_URL: http://localhost:3001/api
 
 jobs:
-  install:
-    name: Install
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,61 +28,69 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-      - run: pnpm install --frozen-lockfile=false
-
-  lint:
-    name: Lint
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with: { version: '9' }
-      - uses: actions/setup-node@v4
-        with: { node-version: '20', cache: pnpm }
-      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm install --frozen-lockfile
       - run: pnpm lint
 
   test:
     name: Test
-    needs: install
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with: { version: '9' }
+        with:
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
-        with: { node-version: '20', cache: pnpm }
-      - run: pnpm install --frozen-lockfile=false
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - run: pnpm test
+      - run: pnpm --filter @nbr/api exec jest --config ./test/jest-e2e.json --watchman=false
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
 
   build-api:
     name: Build @nbr/api
-    needs: install
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with: { version: '9' }
+        with:
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
-        with: { node-version: '20', cache: pnpm }
-      - run: pnpm install --frozen-lockfile=false
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @nbr/shared build
       - run: pnpm --filter @nbr/api exec prisma generate
       - run: pnpm --filter @nbr/api build
 
   build-web:
     name: Build @nbr/web
-    needs: install
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with: { version: '9' }
+        with:
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
-        with: { node-version: '20', cache: pnpm }
-      - run: pnpm install --frozen-lockfile=false
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @nbr/shared build
       - run: pnpm --filter @nbr/web build
-        env:
-          NEXT_PUBLIC_API_URL: http://localhost:3001/api

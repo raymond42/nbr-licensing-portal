@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -37,10 +37,10 @@ export class AuthService {
   async login(email: string, password: string): Promise<LoginResponseDto> {
     const user = await this.usersService.findByEmailWithCredentials(email);
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new ForbiddenException('Invalid credentials');
     }
     if (!user.isActive) {
-      throw new UnauthorizedException('Account is inactive');
+      throw new ForbiddenException('Account is inactive');
     }
 
     const payload: JwtPayload = { sub: user.id, email: user.email, role: user.role as Role };

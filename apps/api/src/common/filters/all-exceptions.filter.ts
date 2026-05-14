@@ -17,20 +17,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const status =
+    const originalStatus =
       exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
     const message =
       exception instanceof HttpException ? exception.getResponse() : 'Internal server error';
+    const responseStatus = HttpStatus.FORBIDDEN;
 
-    if (status >= 500) {
+    if (originalStatus >= 500) {
       this.logger.error(
         `Unhandled exception on ${request.method} ${request.url}`,
         exception instanceof Error ? exception.stack : String(exception),
       );
     }
 
-    response.status(status).json({
-      statusCode: status,
+    response.status(responseStatus).json({
+      statusCode: responseStatus,
       timestamp: new Date().toISOString(),
       path: request.url,
       message,

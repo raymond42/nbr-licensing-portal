@@ -1,9 +1,5 @@
 name: Deploy
 
-# Placeholder workflow. Each app deploys via its own job so they can target
-# different environments (e.g. API to a container host, Web to a managed
-# platform) without coupling release cadence.
-
 on:
   workflow_dispatch:
     inputs:
@@ -15,13 +11,23 @@ on:
 
 jobs:
   deploy-api:
+    name: API deployment notes
     if: ${{ inputs.app == 'api' }}
     runs-on: ubuntu-latest
     steps:
-      - run: echo "TODO: build & push API image, run migrations, deploy."
+      - name: Explain API deployment
+        run: |
+          echo "API deployment is platform-managed."
+          echo "Recommended target: Railway or Render using apps/api/Dockerfile or Node build commands from README."
+          echo "Run Prisma migrate deploy once per release before scaling multiple API replicas."
 
   deploy-web:
+    name: Web deployment notes
     if: ${{ inputs.app == 'web' }}
     runs-on: ubuntu-latest
     steps:
-      - run: echo "TODO: deploy web app to chosen hosting target."
+      - name: Explain web deployment
+        run: |
+          echo "Web deployment is platform-managed."
+          echo "Recommended target: Vercel pointed at apps/web or repo-root filtered pnpm commands."
+          echo "Set NEXT_PUBLIC_API_URL to the deployed API URL including /api."

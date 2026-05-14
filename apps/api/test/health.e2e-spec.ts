@@ -22,9 +22,6 @@ describe('Health endpoint', () => {
   });
 
   it('returns API readiness status', async () => {
-    await request(app.getHttpServer())
-      .get('/api/health')
-      .expect(200)
-      .expect({ status: 'ok' });
+    await request(app.getHttpServer()).get('/api/health').expect(200).expect({ status: 'ok' });
   });
 });

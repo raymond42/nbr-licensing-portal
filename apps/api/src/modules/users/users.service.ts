@@ -3,7 +3,6 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { Prisma, Role as PrismaRole } from '@prisma/client';
@@ -38,7 +37,7 @@ export class UsersService {
   async findActiveForJwt(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user?.isActive) {
-      throw new UnauthorizedException('User not found or inactive');
+      throw new ForbiddenException('User not found or inactive');
     }
     return { sub: user.id, email: user.email, role: user.role as Role };
   }

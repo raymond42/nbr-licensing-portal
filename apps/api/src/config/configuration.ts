@@ -1,6 +1,7 @@
 export interface AppConfiguration {
   nodeEnv: 'development' | 'test' | 'production';
   port: number;
+  frontendUrl: string;
   corsOrigin: string;
   database: { url: string };
   jwt: { secret: string; expiresIn: string };
@@ -10,6 +11,7 @@ export interface AppConfiguration {
 export default (): AppConfiguration => ({
   nodeEnv: (process.env.NODE_ENV as AppConfiguration['nodeEnv']) ?? 'development',
   port: parseInt(process.env.PORT ?? '3001', 10),
+  frontendUrl: process.env.FRONTEND_URL ?? 'http://localhost:3000',
   corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
   database: { url: process.env.DATABASE_URL ?? '' },
   jwt: {

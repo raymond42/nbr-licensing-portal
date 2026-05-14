@@ -217,9 +217,6 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@locator/runtime':
-        specifier: ^0.5.1
-        version: 0.5.1
       '@locator/webpack-loader':
         specifier: ^0.5.1
         version: 0.5.1(webpack@5.97.1(postcss@8.5.14))

@@ -163,7 +163,7 @@ export class AuditService {
     application: { applicantId: string; status: ApplicationStatus },
   ): void {
     if (viewer.role === Role.APPLICANT && application.applicantId !== viewer.sub) {
-      throw new NotFoundException('Application not found');
+      throw new ForbiddenException('You do not have permission to view this application');
     }
     if (
       viewer.role === Role.REVIEWER ||
@@ -171,7 +171,7 @@ export class AuditService {
       viewer.role === Role.ADMIN
     ) {
       if (application.status === AppStatusShared.DRAFT && application.applicantId !== viewer.sub) {
-        throw new NotFoundException('Application not found');
+        throw new ForbiddenException('You do not have permission to view this application');
       }
     }
   }

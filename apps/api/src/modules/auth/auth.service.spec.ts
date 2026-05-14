@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
 import type { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -71,7 +71,7 @@ describe('AuthService', () => {
     usersService.findByEmailWithCredentials.mockResolvedValue(null);
 
     await expect(service.login('missing@example.com', 'password')).rejects.toBeInstanceOf(
-      UnauthorizedException,
+      ForbiddenException,
     );
     expect(jwtService.sign).not.toHaveBeenCalled();
   });
@@ -81,7 +81,7 @@ describe('AuthService', () => {
     (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
     await expect(service.login('applicant@example.com', 'wrong')).rejects.toBeInstanceOf(
-      UnauthorizedException,
+      ForbiddenException,
     );
   });
 
@@ -90,7 +90,7 @@ describe('AuthService', () => {
     (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
     await expect(service.login('applicant@example.com', 'password')).rejects.toBeInstanceOf(
-      UnauthorizedException,
+      ForbiddenException,
     );
   });
 

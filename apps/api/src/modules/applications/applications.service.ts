@@ -143,8 +143,11 @@ export class ApplicationsService {
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const current = await tx.application.findUnique({ where: { id } });
-      if (!current || current.applicantId !== viewer.sub) {
+      if (!current) {
         throw new NotFoundException('Application not found');
+      }
+      if (current.applicantId !== viewer.sub) {
+        throw new ForbiddenException('You do not have permission to edit this application');
       }
 
       const data: {

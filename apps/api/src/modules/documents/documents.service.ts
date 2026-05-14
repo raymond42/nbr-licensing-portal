@@ -144,8 +144,13 @@ export class DocumentsService {
     }
 
     const application = await this.prisma.application.findUnique({ where: { id: applicationId } });
-    if (!application || application.applicantId !== uploaderId) {
+    if (!application) {
       throw new NotFoundException('Application not found');
+    }
+    if (application.applicantId !== uploaderId) {
+      throw new ForbiddenException(
+        'You do not have permission to upload documents for this application',
+      );
     }
     this.assertApplicantMayUpload(application.status);
 
@@ -167,11 +172,16 @@ export class DocumentsService {
     try {
       return await this.prisma.$transaction(async (tx) => {
         const fresh = await tx.application.findUnique({ where: { id: applicationId } });
-        if (!fresh || fresh.version !== expectedVersion) {
+        if (!fresh) {
+          throw new NotFoundException('Application not found');
+        }
+        if (fresh.version !== expectedVersion) {
           throw new ConflictException('Application version mismatch; refresh and retry');
         }
         if (fresh.applicantId !== uploaderId) {
-          throw new NotFoundException('Application not found');
+          throw new ForbiddenException(
+            'You do not have permission to upload documents for this application',
+          );
         }
         this.assertApplicantMayUpload(fresh.status);
 

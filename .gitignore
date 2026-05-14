@@ -12,8 +12,10 @@ out/
 # Environment
 .env
 .env.local
+.env.*
 .env.*.local
 !.env.example
+!**/.env.example
 
 # Logs
 *.log
@@ -42,3 +44,6 @@ apps/api/uploads/*
 # Turbo / cache
 .turbo/
 .cache/
+
+# Docker
+docker-compose.override.yml

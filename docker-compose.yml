@@ -20,7 +20,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: apps/api/Dockerfile
+      dockerfile: apps/api/Dockerfile.dev
     container_name: nbr_api
     restart: unless-stopped
     depends_on:
@@ -29,31 +29,55 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3001
+      FRONTEND_URL: http://localhost:3000
       CORS_ORIGIN: http://localhost:3000
       DATABASE_URL: postgresql://${POSTGRES_USER:-nbr}:${POSTGRES_PASSWORD:-nbr}@postgres:5432/${POSTGRES_DB:-nbr_licensing}?schema=public
-      JWT_SECRET: ${JWT_SECRET:-nbr-licence-12345}
+      JWT_SECRET: ${JWT_SECRET:-nbr-local-development-secret}
       JWT_EXPIRES_IN: 3600s
       MAX_UPLOAD_SIZE_BYTES: 5242880
       UPLOAD_DIR: /workspace/apps/api/uploads
+    command: >
+      sh -c "pnpm --filter @nbr/shared build &&
+             pnpm --filter @nbr/api exec prisma generate &&
+             pnpm --filter @nbr/api run dev"
     ports:
       - '3001:3001'
     volumes:
+      - .:/workspace
+      - root_node_modules:/workspace/node_modules
+      - api_node_modules:/workspace/apps/api/node_modules
+      - shared_node_modules:/workspace/packages/shared/node_modules
       - ./apps/api/uploads:/workspace/apps/api/uploads
 
   web:
     build:
       context: .
-      dockerfile: apps/web/Dockerfile
+      dockerfile: apps/web/Dockerfile.dev
     container_name: nbr_web
     restart: unless-stopped
     depends_on:
       - api
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       NEXT_PUBLIC_API_URL: http://localhost:3001/api
-      NEXT_PUBLIC_APP_NAME: NBR Licensing Portal
+      WATCHPACK_POLLING: 'true'
+      CHOKIDAR_USEPOLLING: 'true'
+    command: >
+      sh -c "pnpm --filter @nbr/shared build &&
+             pnpm --filter @nbr/web exec next dev -p 3000 -H 0.0.0.0"
     ports:
       - '3000:3000'
+    volumes:
+      - .:/workspace
+      - root_node_modules:/workspace/node_modules
+      - web_node_modules:/workspace/apps/web/node_modules
+      - shared_node_modules:/workspace/packages/shared/node_modules
+      - web_next:/workspace/apps/web/.next
 
 volumes:
   postgres_data:
+  root_node_modules:
+  api_node_modules:
+  web_node_modules:
+  shared_node_modules:
+  web_next:

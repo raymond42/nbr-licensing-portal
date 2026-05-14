@@ -22,17 +22,40 @@ function registerLegacySwaggerRedirects(app: INestApplication): void {
   });
 }
 
+function registerRootHealthCheck(app: INestApplication): void {
+  const httpAdapter = app.getHttpAdapter();
+  if (httpAdapter.getType() !== 'express') {
+    return;
+  }
+  const expressApp = httpAdapter.getInstance();
+  expressApp.get('/health', (_req: Request, res: Response) => {
+    res.status(200).json({ status: 'ok' });
+  });
+}
+
+function resolveCorsOrigins(config: ConfigService): string[] {
+  const frontendUrl = config.get<string>('FRONTEND_URL', 'http://localhost:3000');
+  const rawOrigins = config.get<string>('CORS_ORIGIN', frontendUrl);
+  const origins = rawOrigins
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  return Array.from(new Set([frontendUrl, ...origins]));
+}
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const config = app.get(ConfigService);
 
   app.setGlobalPrefix('api');
+  app.enableShutdownHooks();
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
   );
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableCors({
-    origin: config.get<string>('CORS_ORIGIN', 'http://localhost:3000'),
+    origin: resolveCorsOrigins(config),
     credentials: true,
   });
 
@@ -67,6 +90,7 @@ async function bootstrap() {
   });
 
   registerLegacySwaggerRedirects(app);
+  registerRootHealthCheck(app);
 
   const port = config.get<number>('PORT', 3001);
   await app.listen(port);

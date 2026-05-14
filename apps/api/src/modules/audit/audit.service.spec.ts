@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException } from '@nestjs/common';
 import { ApplicationStatus } from '@prisma/client';
 
 import { Role } from '@nbr/shared';
@@ -21,24 +21,24 @@ describe('AuditService', () => {
     ).not.toThrow();
   });
 
-  it('hides applications from other applicants', () => {
+  it('forbids applications from other applicants', () => {
     expect(() =>
       service.assertCanViewApplication(
         { sub: 'applicant-2', role: Role.APPLICANT },
         { applicantId: 'applicant-1', status: ApplicationStatus.SUBMITTED },
       ),
-    ).toThrow(NotFoundException);
+    ).toThrow(ForbiddenException);
   });
 
   it.each([Role.ADMIN, Role.REVIEWER, Role.APPROVER])(
-    'hides another applicant draft from %s',
+    'forbids another applicant draft from %s',
     (role) => {
       expect(() =>
         service.assertCanViewApplication(
           { sub: 'user-1', role },
           { applicantId: 'applicant-1', status: ApplicationStatus.DRAFT },
         ),
-      ).toThrow(NotFoundException);
+      ).toThrow(ForbiddenException);
     },
   );
 
